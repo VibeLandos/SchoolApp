@@ -4,6 +4,7 @@
 
 ## 2026-09-06
 
+- Пакет приложения `com.arzabc.school`, версия 6.7 (code 67) — отдельно от шаблонного `com.example.firstandroidap`.
 - Сборка: Studio Run больше не ждёт `inputs.files` (стёртых каталогов там нет). `pinCursorGradleCache` копирует dex Navigation в хеш из лога; в `.idea/gradle.xml` задан Gradle user home; dex идёт через classpath (`android.useFullClasspathForDexingTransform`).
 - Сборка: если Studio Run не находит dex/ресурсы в Cursor Temp, они копируются из `%USERPROFILE%/.gradle` по имени артефакта (один junction недостаточно — хеши transform другие).
 - Сборка: перед dex/aapt задача `pinCursorGradleCache` делает junction стёртого Cursor Temp на `%USERPROFILE%/.gradle` — Studio не использует wrapper и иначе падает на mergeExtDex.

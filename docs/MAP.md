@@ -1,16 +1,16 @@
 # Карта проекта
 
-Android-приложение **Дневник**: расписание по дням недели + домашка на конкретную дату. Пакет `com.example.firstandroidap`. Модуль один: `:app`.
+Android-приложение **Дневник**: расписание по дням недели + домашка на конкретную дату. Пакет `com.arzabc.school`, версия **6.7**. Модуль один: `:app`.
 
 ## Точки входа
 
 | Файл | Роль |
 |---|---|
 | `app/src/main/AndroidManifest.xml` | Application + launcher Activity |
-| `app/src/main/java/com/example/firstandroidap/SchoolApplication.kt` | Room + `SchoolRepository` + `ThemeSettings` |
-| `app/src/main/java/com/example/firstandroidap/MainActivity.kt` | Compose, `DiaryTheme(mode)`, `SchoolApp` |
-| `app/src/main/java/com/example/firstandroidap/ui/SchoolApp.kt` | Навигация, нижнее меню (дневник / сейчас / задания), drawer, шиты |
-| `app/src/main/java/com/example/firstandroidap/ui/SchoolViewModel.kt` | Состояние дня/недели, запись в репозиторий |
+| `app/src/main/java/com/arzabc/school/SchoolApplication.kt` | Room + `SchoolRepository` + `ThemeSettings` |
+| `app/src/main/java/com/arzabc/school/MainActivity.kt` | Compose, `DiaryTheme(mode)`, `SchoolApp` |
+| `app/src/main/java/com/arzabc/school/ui/SchoolApp.kt` | Навигация, нижнее меню (дневник / сейчас / задания), drawer, шиты |
+| `app/src/main/java/com/arzabc/school/ui/SchoolViewModel.kt` | Состояние дня/недели, запись в репозиторий |
 
 ## Данные (`.../data/`)
 
@@ -47,6 +47,7 @@ Android-приложение **Дневник**: расписание по дн�
 ## Сборка
 
 - Gradle: корневой `build.gradle.kts`, `app/build.gradle.kts`, версии в `gradle/libs.versions.toml`
+- Идентификатор: `com.arzabc.school`, `versionName` 6.7 / `versionCode` 67 — не поднимать без просьбы
 - JDK для Gradle: `org.gradle.java.home` в `gradle.properties` → `jbr-21.0.11` (не системная Java 25 и не сломанный `jbr` новой Studio)
 - Кэш Gradle: в `.idea/gradle.xml` задан `gradleUserHome` = `%USERPROFILE%/.gradle`. Задача `pinCursorGradleCache` перед dex/aapt кладёт пропавший `transforms-4` (в т.ч. хеш `navigation-common-ktx`) из настоящего кэша в Cursor Temp. `android.useFullClasspathForDexingTransform` — чтобы dex не требовал стёртые transform-папки.
 - Compose + Material3, Navigation, Room (KSP), desugar для `java.time`; Compose Compiler strong skipping

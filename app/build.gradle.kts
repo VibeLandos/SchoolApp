@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.firstandroidap"
+    namespace = "com.arzabc.school"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.firstandroidap"
+        applicationId = "com.arzabc.school"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 67
+        versionName = "6.7" // keep 6.7 unless asked to change
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

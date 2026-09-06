@@ -1,5 +1,5 @@
 # Room entities and generated code must survive R8 so release matches debug data.
--keep class com.example.firstandroidap.data.** { *; }
+-keep class com.arzabc.school.data.** { *; }
 -keep class * extends androidx.room.RoomDatabase
 -dontwarn androidx.room.paging.**
 
