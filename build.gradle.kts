@@ -14,12 +14,16 @@ tasks.register("pinCursorGradleCache") {
 
 gradle.projectsEvaluated {
     val pin = tasks.named("pinCursorGradleCache")
+    val realHome = File(System.getProperty("user.home"), ".gradle")
     subprojects.forEach { project ->
         project.tasks.matching { task ->
             task.name.startsWith("mergeExtDex") ||
-                task.name.startsWith("process") && task.name.endsWith("Resources")
+                (task.name.startsWith("process") && task.name.endsWith("Resources"))
         }.configureEach {
             dependsOn(pin)
+            doFirst {
+                restoreMissingSandboxFiles(inputs.files.files, realHome)
+            }
         }
     }
 }
@@ -41,17 +45,52 @@ fun pinCursorSandboxGradleHome() {
     }
 }
 
-fun junctionGradleHome(link: File, realHome: File) {
-    if (realHome.canonicalPath.equals(link.canonicalPath, ignoreCase = true)) return
-    if (link.exists() && File(link, "caches").isDirectory && File(link, "wrapper").isDirectory) {
-        return
+fun restoreMissingSandboxFiles(files: Iterable<File>, realHome: File) {
+    files.forEach { file ->
+        if (file.exists()) return@forEach
+        if (!file.absolutePath.contains("cursor-sandbox-cache")) return@forEach
+        restoreMissingTransform(file, realHome)
     }
+}
+
+fun restoreMissingTransform(missing: File, realHome: File) {
+    val needle = "${File.separator}transforms-4${File.separator}"
+    val raw = missing.absolutePath
+    val at = raw.indexOf(needle, ignoreCase = true)
+    if (at < 0) return
+    val after = raw.substring(at + needle.length)
+    val slash = after.indexOf(File.separatorChar)
+    if (slash < 0) return
+    val destHashDir = File(raw.substring(0, at + needle.length), after.substring(0, slash))
+    val rest = after.substring(slash + 1)
+    val realRoot = File(realHome, "caches${File.separator}transforms-4")
+    if (!realRoot.isDirectory) return
+    val sourceHashDir = realRoot.listFiles().orEmpty().firstOrNull { hashDir ->
+        File(hashDir, rest).exists()
+    } ?: return
+    destHashDir.parentFile.mkdirs()
+    if (!destHashDir.exists()) {
+        sourceHashDir.copyRecursively(destHashDir)
+    }
+}
+
+fun junctionGradleHome(link: File, realHome: File) {
+    if (realHome.canonicalFile == link.canonicalFile) return
+    val alreadyLinked = link.exists() &&
+        runCatching { link.canonicalFile == realHome.canonicalFile }.getOrDefault(false)
+    if (alreadyLinked) return
+    val hasDex = File(link, "caches${File.separator}transforms-4")
+        .takeIf { it.isDirectory }
+        ?.walk()
+        ?.any { it.name.endsWith("_dex") }
+        ?: false
+    if (hasDex && File(link, "wrapper").isDirectory) return
     link.parentFile.mkdirs()
     if (link.exists()) {
         link.deleteRecursively()
     }
-    val result = ProcessBuilder(
-        "cmd.exe", "/c", "mklink", "/J", link.absolutePath, realHome.absolutePath,
-    ).redirectErrorStream(true).start()
-    result.waitFor()
+    ProcessBuilder("cmd.exe", "/c", "mklink", "/J", link.absolutePath, realHome.absolutePath)
+        .redirectErrorStream(true)
+        .start()
+        .waitFor()
 }

@@ -48,7 +48,7 @@ Android-приложение **Дневник**: расписание по дн�
 
 - Gradle: корневой `build.gradle.kts`, `app/build.gradle.kts`, версии в `gradle/libs.versions.toml`
 - JDK для Gradle: `org.gradle.java.home` в `gradle.properties` → `jbr-21.0.11` (не системная Java 25 и не сломанный `jbr` новой Studio)
-- Кэш Gradle: wrapper и `.idea/gradle.xml` плюс задача `pinCursorGradleCache` — junction `Temp/cursor-sandbox-cache/*/gradle` → `%USERPROFILE%/.gradle`, потому что Studio из Cursor не запускает wrapper и ходит в стёртый Temp.
+- Кэш Gradle: `pinCursorGradleCache` плюс копирование пропавших `transforms-4` из `%USERPROFILE%/.gradle` по имени артефакта — зелёная стрелка в Studio иначе падает на стёртом Cursor Temp, даже после успешного Sync.
 - Compose + Material3, Navigation, Room (KSP), desugar для `java.time`; Compose Compiler strong skipping
 - Release: R8 minify + debug-подпись, чтобы ставить на телефон без keystore
 - Имя приложения: `app/src/main/res/values/strings.xml` → «Дневник» / `values-en` → «Diary»

@@ -4,6 +4,7 @@
 
 ## 2026-09-06
 
+- Сборка: если Studio Run не находит dex/ресурсы в Cursor Temp, они копируются из `%USERPROFILE%/.gradle` по имени артефакта (один junction недостаточно — хеши transform другие).
 - Сборка: перед dex/aapt задача `pinCursorGradleCache` делает junction стёртого Cursor Temp на `%USERPROFILE%/.gradle` — Studio не использует wrapper и иначе падает на mergeExtDex.
 - Сборка: Gradle user home задан в wrapper и в `.idea/gradle.xml`, чтобы Studio из Cursor не ходила в стёртый Temp/cursor-sandbox (mergeExtDex / цвета Material3).
 - Сборка смотрит кэш Gradle в `C:/Users/Rinat/.gradle`, не в Temp/cursor-sandbox; Kotlin компилируется in-process — иначе assembleDebug падает на mergeExtDex и «Material3 color not found».
