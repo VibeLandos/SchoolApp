@@ -25,7 +25,9 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.firstandroidap.R
 import com.example.firstandroidap.ui.theme.CoverDeep
 import com.example.firstandroidap.ui.theme.Paper
 import java.io.File
@@ -104,7 +106,7 @@ fun HomeworkPhotoThumb(
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
-                contentDescription = "Фото к д/з",
+                contentDescription = stringResource(R.string.cd_homework_photo),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -130,7 +132,7 @@ fun HomeworkPhotoThumb(
             ) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = "Убрать фото",
+                    contentDescription = stringResource(R.string.cd_remove_photo),
                     tint = Paper,
                     modifier = Modifier.size(14.dp),
                 )

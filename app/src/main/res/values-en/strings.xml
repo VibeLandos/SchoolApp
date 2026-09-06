@@ -1,0 +1,71 @@
+<resources>
+    <string name="app_name">Diary</string>
+    <string name="nav_diary">Diary</string>
+    <string name="nav_tasks">Tasks</string>
+    <string name="cd_open_menu">Menu</string>
+    <string name="cd_prev_week">Previous week</string>
+    <string name="cd_next_week">Next week</string>
+    <string name="cd_homework_photo">Homework photo</string>
+    <string name="cd_remove_photo">Remove photo</string>
+    <string name="menu_appearance">Appearance</string>
+    <string name="menu_language">Language</string>
+    <string name="theme_cover">Diary cover</string>
+    <string name="theme_system">System colors</string>
+    <string name="theme_dark">Night page</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_english">English</string>
+    <string name="col_subject">SUBJECT</string>
+    <string name="col_homework">HOMEWORK</string>
+    <string name="diary_hint">Tap a cell to write. Swipe to change the day, use the arrows for the week.</string>
+    <string name="placeholder_subject">subject</string>
+    <string name="placeholder_homework">hw</string>
+    <string name="room_short">rm. %s</string>
+    <string name="tasks_title">Tasks</string>
+    <string name="filter_open">Not done</string>
+    <string name="filter_done">Done</string>
+    <string name="filter_all">All</string>
+    <string name="tasks_empty">Nothing yet — write homework on the diary page, in the right-hand cell.</string>
+    <string name="task_subject_period">%1$s · period %2$d</string>
+    <string name="lesson_n">Period %d</string>
+    <string name="overdue">overdue</string>
+    <string name="homework_sheet_title">Homework</string>
+    <string name="homework_sheet_subtitle">Period %1$d · %2$s</string>
+    <string name="label_subject">Subject</string>
+    <string name="label_assignment">Assignment</string>
+    <string name="hint_assignment">ex. 12, p. 34, §5</string>
+    <string name="photos_count_header">Photos (%1$d/%2$d)</string>
+    <string name="add_photo">Add</string>
+    <string name="done">Done</string>
+    <string name="save_homework">Save to diary</string>
+    <string name="erase_homework">Erase assignment</string>
+    <string name="lesson_title">Period %d</string>
+    <string name="lesson_title_edit">Period %d · edit</string>
+    <string name="label_room">Room</string>
+    <string name="save">Save</string>
+    <string name="remove_lesson">Remove lesson</string>
+    <string name="date_with_weekday">%1$s, %2$s</string>
+    <plurals name="photo_count">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
+    <string-array name="subjects">
+        <item>Mathematics</item>
+        <item>Algebra</item>
+        <item>Geometry</item>
+        <item>Russian</item>
+        <item>Literature</item>
+        <item>English</item>
+        <item>History</item>
+        <item>Social studies</item>
+        <item>Geography</item>
+        <item>Biology</item>
+        <item>Physics</item>
+        <item>Chemistry</item>
+        <item>Computer science</item>
+        <item>PE</item>
+        <item>Life safety</item>
+        <item>Music</item>
+        <item>Art</item>
+        <item>Technology</item>
+    </string-array>
+</resources>

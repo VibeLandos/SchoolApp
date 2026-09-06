@@ -1,5 +1,6 @@
 package com.example.firstandroidap
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -8,11 +9,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
+import com.example.firstandroidap.data.ThemeSettings
 import com.example.firstandroidap.ui.SchoolApp
 import com.example.firstandroidap.ui.theme.CoverDeep
 import com.example.firstandroidap.ui.theme.DiaryTheme
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(ThemeSettings.wrapContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -22,10 +28,18 @@ class MainActivity : ComponentActivity() {
         val settings = (application as SchoolApplication).themeSettings
         setContent {
             val mode by settings.mode.collectAsState()
+            val language by settings.language.collectAsState()
             DiaryTheme(mode = mode) {
                 SchoolApp(
                     themeMode = mode,
                     onThemeMode = settings::setMode,
+                    language = language,
+                    onLanguage = { next ->
+                        if (next != language) {
+                            settings.setLanguage(next)
+                            recreate()
+                        }
+                    },
                 )
             }
         }

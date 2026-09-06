@@ -39,10 +39,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.firstandroidap.R
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
@@ -115,20 +117,26 @@ fun EditHomeworkSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 28.dp),
         ) {
-            Text("Домашнее задание", fontSize = 22.sp)
+            Text(stringResource(R.string.homework_sheet_title), fontSize = 22.sp)
+            val lessonLine = if (lesson != null) {
+                stringResource(R.string.homework_sheet_subtitle, period, lesson.subject)
+            } else {
+                stringResource(R.string.lesson_n, period)
+            }
+            val dateLine = stringResource(
+                R.string.date_with_weekday,
+                Dates.weekdayName(date),
+                Dates.formatFull(date),
+            )
             Text(
-                text = buildString {
-                    append("Урок $period")
-                    if (lesson != null) append(" · ${lesson.subject}")
-                    append("\n${Dates.weekdayName(date)}, ${Dates.formatFull(date)}")
-                },
+                text = "$lessonLine\n$dateLine",
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
             )
             if (lesson == null) {
                 OutlinedTextField(
                     value = subject,
                     onValueChange = { subject = it },
-                    label = { Text("Предмет") },
+                    label = { Text(stringResource(R.string.label_subject)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -138,15 +146,15 @@ fun EditHomeworkSheet(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Что задали") },
-                placeholder = { Text("упр. 12, стр. 34, §5") },
+                label = { Text(stringResource(R.string.label_assignment)) },
+                placeholder = { Text(stringResource(R.string.hint_assignment)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(96.dp),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             )
             Spacer(Modifier.height(12.dp))
-            Text("Фото (${drafts.size}/$MAX_HOMEWORK_PHOTOS)")
+            Text(stringResource(R.string.photos_count_header, drafts.size, MAX_HOMEWORK_PHOTOS))
             Spacer(Modifier.height(8.dp))
             Row(
                 Modifier
@@ -166,13 +174,13 @@ fun EditHomeworkSheet(
                 if (drafts.size < MAX_HOMEWORK_PHOTOS) {
                     OutlinedButton(onClick = ::pickPhotos) {
                         Icon(Icons.Outlined.AddAPhoto, contentDescription = null)
-                        Text("Добавить", modifier = Modifier.padding(start = 8.dp))
+                        Text(stringResource(R.string.add_photo), modifier = Modifier.padding(start = 8.dp))
                     }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = isDone, onCheckedChange = { isDone = it })
-                Text("Сделано")
+                Text(stringResource(R.string.done))
             }
             Spacer(Modifier.height(8.dp))
             Button(
@@ -194,7 +202,7 @@ fun EditHomeworkSheet(
                 enabled = description.isNotBlank() || drafts.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Записать в дневник")
+                Text(stringResource(R.string.save_homework))
             }
             if (existing != null) {
                 TextButton(
@@ -204,7 +212,7 @@ fun EditHomeworkSheet(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Стереть задание")
+                    Text(stringResource(R.string.erase_homework))
                 }
             }
         }

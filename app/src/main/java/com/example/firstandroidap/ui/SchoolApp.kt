@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.firstandroidap.data.AppLanguage
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.Lesson
@@ -71,6 +72,8 @@ fun SchoolApp(
     viewModel: SchoolViewModel = viewModel(),
     themeMode: ThemeMode,
     onThemeMode: (ThemeMode) -> Unit,
+    language: AppLanguage,
+    onLanguage: (AppLanguage) -> Unit,
 ) {
     val ui by viewModel.uiState.collectAsState()
     val palette = LocalDiaryPalette.current
@@ -95,6 +98,11 @@ fun SchoolApp(
                 mode = themeMode,
                 onMode = { mode ->
                     onThemeMode(mode)
+                    closeMenu()
+                },
+                language = language,
+                onLanguage = { next ->
+                    onLanguage(next)
                     closeMenu()
                 },
             )

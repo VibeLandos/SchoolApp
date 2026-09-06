@@ -21,22 +21,22 @@ Android-приложение **Дневник**: расписание по дн�
 | `AppDatabase.kt` | Room `diary.db`, v2 (миграция с v1) |
 | `SchoolRepository.kt` | upsert/удаление; пустой текст и без фото = удалить д/з |
 | `HomeworkPhotoStore.kt` | копии фото в `filesDir/homework_photos`, до 8 штук |
-| `Catalog.kt` | предметы, звонки 1–8, даты (пн–сб), подпись предмета для ДЗ |
-| `ThemeSettings.kt` | режим темы: обложка / система / ночная страница |
+| `Catalog.kt` | звонки 1–8, даты (пн–сб, подписи по языку приложения); предметы — `res/values*/strings.xml` (`subjects`); подпись предмета для ДЗ |
+| `ThemeSettings.kt` | режим темы и язык (`AppLanguage`: ru по умолчанию / en) |
 
 ## Экраны (`.../ui/`)
 
 | Файл | Роль |
 |---|---|
-| `diary/DiaryScreen.kt` | Страница дневника: пейджер пн–сб (6 страниц, без пересоздания), таблица № / предмет / д/з |
+| `diary/DiaryScreen.kt` | Страница дневника: пейджер пн–сб (6 страниц, без предзагрузки соседей), таблица № / предмет (130.dp) / д/з; один тап на строку по зонам, без ripple |
 | `components/HomeworkPhotoThumb.kt` | Превью фото (декод в IO) |
 | `homework/HomeworkListScreen.kt` | Вкладка «Задания»: список д/з, переход на день |
 | `components/EditHomeworkSheet.kt` | Вписать/стереть д/з, прикрепить несколько фото |
 | `components/EditLessonSheet.kt` | Предмет + кабинет; время из звонков, не вручную |
 | `theme/Color.kt`, `Type.kt`, `Theme.kt` | Палитры обложки, ночной страницы и Material You; `LocalDiaryPalette` |
-| `menu/AppDrawer.kt` | Боковое меню: переключатель оформления |
+| `menu/AppDrawer.kt` | Боковое меню: оформление и язык |
 
-Нижние вкладки: **Дневник** (`diary`), **Задания** (`tasks`). Меню: иконка «гамбургер» на обоих экранах.
+Нижние вкладки: **Дневник** (`diary`), **Задания** (`tasks`). Меню: иконка «гамбургер» на обоих экранах. Язык: русский по умолчанию, английский из меню; строки в `res/values/strings.xml` и `res/values-en/strings.xml`.
 
 ## Сборка
 
@@ -44,7 +44,7 @@ Android-приложение **Дневник**: расписание по дн�
 - JDK для Gradle: `org.gradle.java.home` в `gradle.properties` → Android Studio `jbr` (не системная Java 25)
 - Compose + Material3, Navigation, Room (KSP), desugar для `java.time`; Compose Compiler strong skipping
 - Release: R8 minify + debug-подпись, чтобы ставить на телефон без keystore
-- Имя приложения: `app/src/main/res/values/strings.xml` → «Дневник»
+- Имя приложения: `app/src/main/res/values/strings.xml` → «Дневник» / `values-en` → «Diary»
 
 ## Документы для агента
 

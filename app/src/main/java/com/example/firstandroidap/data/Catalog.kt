@@ -7,27 +7,6 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 object SchoolCatalog {
-    val subjects = listOf(
-        "Математика",
-        "Алгебра",
-        "Геометрия",
-        "Русский язык",
-        "Литература",
-        "Английский язык",
-        "История",
-        "Обществознание",
-        "География",
-        "Биология",
-        "Физика",
-        "Химия",
-        "Информатика",
-        "Физкультура",
-        "ОБЖ",
-        "Музыка",
-        "ИЗО",
-        "Технология",
-    )
-
     const val PERIODS = 8
 
     fun bells(period: Int): Pair<String, String> = when (period) {
@@ -44,9 +23,7 @@ object SchoolCatalog {
 }
 
 object Dates {
-    private val ru = Locale("ru")
-    private val fullDate = DateTimeFormatter.ofPattern("d MMMM yyyy", ru)
-    private val month = DateTimeFormatter.ofPattern("MMMM", ru)
+    private fun locale(): Locale = Locale.getDefault()
 
     fun todaySchoolDate(): LocalDate {
         val today = LocalDate.now()
@@ -60,17 +37,24 @@ object Dates {
         return (0..5).map { monday.plusDays(it.toLong()) }
     }
 
-    fun formatFull(date: LocalDate): String = date.format(fullDate)
+    fun formatFull(date: LocalDate): String =
+        date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", locale()))
 
-    fun weekdayName(date: LocalDate): String =
-        date.dayOfWeek.getDisplayName(TextStyle.FULL, ru)
-            .replaceFirstChar { it.titlecase(ru) }
+    fun weekdayName(date: LocalDate): String {
+        val loc = locale()
+        return date.dayOfWeek.getDisplayName(TextStyle.FULL, loc)
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(loc) else it.toString() }
+    }
 
-    fun weekdayShort(date: LocalDate): String =
-        date.dayOfWeek.getDisplayName(TextStyle.SHORT, ru)
-            .replaceFirstChar { it.titlecase(ru) }
+    fun weekdayShort(date: LocalDate): String {
+        val loc = locale()
+        return date.dayOfWeek.getDisplayName(TextStyle.SHORT, loc)
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(loc) else it.toString() }
+    }
 
     fun weekRangeLabel(week: List<LocalDate>): String {
+        val loc = locale()
+        val month = DateTimeFormatter.ofPattern("MMMM", loc)
         val start = week.first()
         val end = week.last()
         return if (start.month == end.month) {
@@ -88,9 +72,7 @@ object Dates {
     fun dayIndex(date: LocalDate): Int = (schoolDayOfWeek(date) - 1).coerceIn(0, 5)
 }
 
-fun subjectFor(homework: Homework, lessons: List<Lesson>): String {
+fun subjectFor(homework: Homework, lessons: List<Lesson>): String? {
     val dayOfWeek = LocalDate.ofEpochDay(homework.epochDay).dayOfWeek.value
-    return lessons.find { it.dayOfWeek == dayOfWeek && it.period == homework.period }
-        ?.subject
-        ?: "Урок ${homework.period}"
+    return lessons.find { it.dayOfWeek == dayOfWeek && it.period == homework.period }?.subject
 }

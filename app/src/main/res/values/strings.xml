@@ -5,8 +5,69 @@
     <string name="cd_open_menu">Меню</string>
     <string name="cd_prev_week">Предыдущая неделя</string>
     <string name="cd_next_week">Следующая неделя</string>
+    <string name="cd_homework_photo">Фото к д/з</string>
+    <string name="cd_remove_photo">Убрать фото</string>
     <string name="menu_appearance">Оформление</string>
+    <string name="menu_language">Язык</string>
     <string name="theme_cover">Обложка дневника</string>
     <string name="theme_system">Цвета системы</string>
     <string name="theme_dark">Ночная страница</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_english">English</string>
+    <string name="col_subject">ПРЕДМЕТ</string>
+    <string name="col_homework">ДОМАШНЕЕ ЗАДАНИЕ</string>
+    <string name="diary_hint">Нажми клетку, чтобы вписать. Листай день свайпом, неделю — стрелками.</string>
+    <string name="placeholder_subject">предмет</string>
+    <string name="placeholder_homework">д/з</string>
+    <string name="room_short">каб. %s</string>
+    <string name="tasks_title">Задания</string>
+    <string name="filter_open">Не сделано</string>
+    <string name="filter_done">Сделано</string>
+    <string name="filter_all">Все</string>
+    <string name="tasks_empty">Пока пусто — запиши д/з на странице дневника, в клетке справа.</string>
+    <string name="task_subject_period">%1$s · урок %2$d</string>
+    <string name="lesson_n">Урок %d</string>
+    <string name="overdue">просрочено</string>
+    <string name="homework_sheet_title">Домашнее задание</string>
+    <string name="homework_sheet_subtitle">Урок %1$d · %2$s</string>
+    <string name="label_subject">Предмет</string>
+    <string name="label_assignment">Что задали</string>
+    <string name="hint_assignment">упр. 12, стр. 34, §5</string>
+    <string name="photos_count_header">Фото (%1$d/%2$d)</string>
+    <string name="add_photo">Добавить</string>
+    <string name="done">Сделано</string>
+    <string name="save_homework">Записать в дневник</string>
+    <string name="erase_homework">Стереть задание</string>
+    <string name="lesson_title">Урок %d</string>
+    <string name="lesson_title_edit">Урок %d · изменить</string>
+    <string name="label_room">Кабинет</string>
+    <string name="save">Сохранить</string>
+    <string name="remove_lesson">Убрать урок</string>
+    <string name="date_with_weekday">%1$s, %2$s</string>
+    <plurals name="photo_count">
+        <item quantity="one">%d фото</item>
+        <item quantity="few">%d фото</item>
+        <item quantity="many">%d фото</item>
+        <item quantity="other">%d фото</item>
+    </plurals>
+    <string-array name="subjects">
+        <item>Математика</item>
+        <item>Алгебра</item>
+        <item>Геометрия</item>
+        <item>Русский язык</item>
+        <item>Литература</item>
+        <item>Английский язык</item>
+        <item>История</item>
+        <item>Обществознание</item>
+        <item>География</item>
+        <item>Биология</item>
+        <item>Физика</item>
+        <item>Химия</item>
+        <item>Информатика</item>
+        <item>Физкультура</item>
+        <item>ОБЖ</item>
+        <item>Музыка</item>
+        <item>ИЗО</item>
+        <item>Технология</item>
+    </string-array>
 </resources>

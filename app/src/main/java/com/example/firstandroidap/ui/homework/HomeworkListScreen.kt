@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -79,7 +80,7 @@ fun HomeworkListScreen(
                 )
             }
             Text(
-                text = "Задания",
+                text = stringResource(R.string.tasks_title),
                 color = palette.gold,
                 fontFamily = FontFamily.Serif,
                 fontSize = 28.sp,
@@ -99,26 +100,26 @@ fun HomeworkListScreen(
             FilterChip(
                 selected = filter == TaskFilter.OPEN,
                 onClick = { filter = TaskFilter.OPEN },
-                label = { Text("Не сделано") },
+                label = { Text(stringResource(R.string.filter_open)) },
                 colors = chipColors,
             )
             FilterChip(
                 selected = filter == TaskFilter.DONE,
                 onClick = { filter = TaskFilter.DONE },
-                label = { Text("Сделано") },
+                label = { Text(stringResource(R.string.filter_done)) },
                 colors = chipColors,
             )
             FilterChip(
                 selected = filter == TaskFilter.ALL,
                 onClick = { filter = TaskFilter.ALL },
-                label = { Text("Все") },
+                label = { Text(stringResource(R.string.filter_all)) },
                 colors = chipColors,
             )
         }
 
         if (visible.isEmpty()) {
             Text(
-                text = "Пока пусто — запиши д/з на странице дневника, в клетке справа.",
+                text = stringResource(R.string.tasks_empty),
                 color = palette.gold.copy(alpha = 0.8f),
                 fontFamily = FontFamily.Serif,
                 modifier = Modifier.padding(20.dp),
@@ -132,6 +133,22 @@ fun HomeworkListScreen(
                     val date = LocalDate.ofEpochDay(item.epochDay)
                     val overdue = !item.isDone && item.epochDay < today
                     val photoCount = photos.count { it.homeworkId == item.id }
+                    val subject = subjectFor(item, lessons)
+                    val title = if (subject != null) {
+                        stringResource(R.string.task_subject_period, subject, item.period)
+                    } else {
+                        stringResource(R.string.lesson_n, item.period)
+                    }
+                    val overdueLabel = stringResource(R.string.overdue)
+                    val dateLine = buildString {
+                        append(Dates.weekdayName(date))
+                        append(", ")
+                        append(Dates.formatFull(date))
+                        if (overdue) {
+                            append(" · ")
+                            append(overdueLabel)
+                        }
+                    }
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -150,7 +167,7 @@ fun HomeworkListScreen(
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                text = "${subjectFor(item, lessons)} · урок ${item.period}",
+                                text = title,
                                 color = palette.gold,
                                 fontWeight = FontWeight.Medium,
                             )
@@ -164,18 +181,13 @@ fun HomeworkListScreen(
                             }
                             if (photoCount > 0) {
                                 Text(
-                                    text = "$photoCount фото",
+                                    text = pluralStringResource(R.plurals.photo_count, photoCount, photoCount),
                                     color = palette.gold.copy(alpha = 0.85f),
                                     fontSize = 12.sp,
                                 )
                             }
                             Text(
-                                text = buildString {
-                                    append(Dates.weekdayName(date))
-                                    append(", ")
-                                    append(Dates.formatFull(date))
-                                    if (overdue) append(" · просрочено")
-                                },
+                                text = dateLine,
                                 color = if (overdue) palette.homeworkInk else palette.faintInk,
                                 fontSize = 12.sp,
                             )

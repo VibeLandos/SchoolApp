@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +33,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,10 +55,28 @@ import com.example.firstandroidap.data.SchoolCatalog
 import com.example.firstandroidap.R
 import com.example.firstandroidap.ui.theme.LocalDiaryPalette
 import java.time.LocalDate
+import java.util.Locale
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 private const val PagerCount = 6
+private val NumberColumnWidth = 40.dp
+private val SubjectColumnWidth = 130.dp
+private val SubjectTapZoneWidth = NumberColumnWidth + SubjectColumnWidth
+
+private fun formatLessonMeta(startTime: String, endTime: String, roomPart: String): String {
+    val hasStart = startTime.isNotBlank()
+    val hasEnd = endTime.isNotBlank()
+    val hasRoom = roomPart.isNotBlank()
+    return when {
+        hasStart && hasEnd && hasRoom -> "$startTime–$endTime · $roomPart"
+        hasStart && hasEnd -> "$startTime–$endTime"
+        hasStart && hasRoom -> "$startTime · $roomPart"
+        hasStart -> startTime
+        hasRoom -> roomPart
+        else -> ""
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -110,7 +135,7 @@ fun DiaryScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            beyondBoundsPageCount = 1,
+            beyondBoundsPageCount = 0,
         ) { page ->
             val date = weekDates.getOrNull(page) ?: selectedDate
             DiaryPage(
@@ -218,8 +243,9 @@ private fun DiaryPage(
 ) {
     val lessonByPeriod = remember(lessons) { lessons.associateBy { it.period } }
     val homeworkByPeriod = remember(homework) { homework.associateBy { it.period } }
-    val weekday = remember(date) { Dates.weekdayName(date).uppercase() }
-    val fullDate = remember(date) { Dates.formatFull(date) }
+    val locale = Locale.getDefault()
+    val weekday = remember(date, locale) { Dates.weekdayName(date).uppercase(locale) }
+    val fullDate = remember(date, locale) { Dates.formatFull(date) }
     val palette = LocalDiaryPalette.current
 
     Column(
@@ -255,23 +281,23 @@ private fun DiaryPage(
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.width(40.dp),
+                modifier = Modifier.width(NumberColumnWidth),
             )
             Text(
-                text = "ПРЕДМЕТ",
+                text = stringResource(R.string.col_subject),
                 color = palette.faintInk,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 letterSpacing = 0.8.sp,
-                modifier = Modifier.weight(0.42f),
+                modifier = Modifier.width(SubjectColumnWidth),
             )
             Text(
-                text = "ДОМАШНЕЕ ЗАДАНИЕ",
+                text = stringResource(R.string.col_homework),
                 color = palette.faintInk,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 letterSpacing = 0.8.sp,
-                modifier = Modifier.weight(0.58f),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -289,7 +315,7 @@ private fun DiaryPage(
             )
         }
         Text(
-            text = "Нажми клетку, чтобы вписать. Листай день свайпом, неделю — стрелками.",
+            text = stringResource(R.string.diary_hint),
             color = palette.faintInk,
             fontSize = 12.sp,
             fontFamily = FontFamily.Serif,
@@ -308,11 +334,33 @@ private fun DiaryRow(
     onHomeworkClick: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
+    val subjectClick = rememberUpdatedState(onSubjectClick)
+    val homeworkClick = rememberUpdatedState(onHomeworkClick)
+    val roomPart = if (!lesson?.room.isNullOrBlank()) {
+        stringResource(R.string.room_short, lesson?.room.orEmpty())
+    } else {
+        ""
+    }
+    val meta = remember(lesson?.startTime, lesson?.endTime, roomPart) {
+        lesson?.let { formatLessonMeta(it.startTime, it.endTime, roomPart) }.orEmpty()
+    }
+    val photoLabel = if (photoCount > 0) {
+        pluralStringResource(R.plurals.photo_count, photoCount, photoCount)
+    } else {
+        ""
+    }
+
     Row(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 52.dp)
-            .padding(end = 8.dp, bottom = 1.dp),
+            .padding(end = 8.dp, bottom = 1.dp)
+            .pointerInput(Unit) {
+                val zonePx = SubjectTapZoneWidth.toPx()
+                detectTapGestures { offset ->
+                    if (offset.x < zonePx) subjectClick.value() else homeworkClick.value()
+                }
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -322,17 +370,24 @@ private fun DiaryRow(
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             textAlign = TextAlign.Center,
-            modifier = Modifier.width(40.dp),
+            modifier = Modifier.width(NumberColumnWidth),
         )
         Column(
             Modifier
-                .weight(0.42f)
-                .clickable(onClick = onSubjectClick)
+                .width(SubjectColumnWidth)
+                .semantics {
+                    role = Role.Button
+                    onClick { onSubjectClick(); true }
+                }
                 .padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             if (lesson == null) {
-                Text("предмет", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp)
+                Text(
+                    stringResource(R.string.placeholder_subject),
+                    color = palette.faintInk.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                )
             } else {
                 Text(
                     text = lesson.subject,
@@ -342,13 +397,7 @@ private fun DiaryRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val meta = listOfNotNull(
-                    lesson.startTime.takeIf { it.isNotBlank() }?.let { start ->
-                        if (lesson.endTime.isNotBlank()) "$start–${lesson.endTime}" else start
-                    },
-                    lesson.room.takeIf { it.isNotBlank() }?.let { "каб. $it" },
-                ).joinToString(" · ")
-                if (meta.isNotBlank()) {
+                if (meta.isNotEmpty()) {
                     Text(meta, color = palette.faintInk, fontSize = 11.sp, maxLines = 1)
                 }
             }
@@ -361,14 +410,22 @@ private fun DiaryRow(
         )
         Column(
             Modifier
-                .weight(0.58f)
-                .clickable(onClick = onHomeworkClick)
+                .fillMaxWidth()
+                .semantics {
+                    role = Role.Button
+                    onClick { onHomeworkClick(); true }
+                }
                 .padding(horizontal = 10.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             when {
                 homework == null -> {
-                    Text("д/з", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+                    Text(
+                        stringResource(R.string.placeholder_homework),
+                        color = palette.faintInk.copy(alpha = 0.7f),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily.Serif,
+                    )
                 }
                 else -> {
                     if (homework.description.isNotBlank()) {
@@ -388,12 +445,17 @@ private fun DiaryRow(
                     }
                     if (photoCount > 0) {
                         Text(
-                            text = "$photoCount фото",
+                            text = photoLabel,
                             color = palette.faintInk,
                             fontSize = 12.sp,
                         )
                     } else if (homework.description.isBlank()) {
-                        Text("д/з", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+                        Text(
+                            stringResource(R.string.placeholder_homework),
+                            color = palette.faintInk.copy(alpha = 0.7f),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily.Serif,
+                        )
                     }
                 }
             }
