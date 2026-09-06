@@ -29,6 +29,9 @@ class ThemeSettings(context: Context) {
     private val _language = MutableStateFlow(AppLanguage.fromPref(prefs.getString(KEY_LANGUAGE, null)))
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
+    private val _weekBells = MutableStateFlow(loadWeekBells())
+    val weekBells: StateFlow<WeekBells> = _weekBells.asStateFlow()
+
     fun setMode(mode: ThemeMode) {
         prefs.edit().putString(KEY_MODE, mode.prefValue).apply()
         _mode.value = mode
@@ -39,10 +42,31 @@ class ThemeSettings(context: Context) {
         _language.value = language
     }
 
+    fun setWeekBells(value: WeekBells) {
+        prefs.edit()
+            .putString(KEY_BELLS, value.week.encode())
+            .putString(KEY_BELLS_DAYS, value.encodeDays())
+            .putBoolean(KEY_BELLS_SETUP, value.setupDone)
+            .apply()
+        _weekBells.value = value
+    }
+
+    private fun loadWeekBells(): WeekBells {
+        val raw = prefs.getString(KEY_BELLS, null)
+        return WeekBells(
+            week = BellSchedule.decode(raw),
+            overrides = WeekBells.decodeDays(prefs.getString(KEY_BELLS_DAYS, null)),
+            setupDone = prefs.getBoolean(KEY_BELLS_SETUP, false),
+        )
+    }
+
     companion object {
         private const val PREFS = "diary_settings"
         private const val KEY_MODE = "theme_mode"
         private const val KEY_LANGUAGE = "language"
+        private const val KEY_BELLS = "bells"
+        private const val KEY_BELLS_DAYS = "bells_days"
+        private const val KEY_BELLS_SETUP = "bells_setup"
 
         fun wrapContext(base: Context): Context {
             val prefs = base.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
@@ -36,12 +37,13 @@ import com.example.firstandroidap.data.AppLanguage
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.Lesson
-import com.example.firstandroidap.data.SchoolCatalog
 import com.example.firstandroidap.ui.components.EditHomeworkSheet
 import com.example.firstandroidap.ui.components.EditLessonSheet
 import com.example.firstandroidap.ui.diary.DiaryScreen
 import com.example.firstandroidap.ui.homework.HomeworkListScreen
 import com.example.firstandroidap.ui.menu.AppDrawer
+import com.example.firstandroidap.ui.menu.BellScheduleSheet
+import com.example.firstandroidap.ui.now.NowScreen
 import com.example.firstandroidap.ui.theme.LocalDiaryPalette
 import com.example.firstandroidap.ui.theme.ThemeMode
 import java.time.LocalDate
@@ -49,6 +51,7 @@ import kotlinx.coroutines.launch
 
 private object Routes {
     const val Diary = "diary"
+    const val Now = "now"
     const val Tasks = "tasks"
 }
 
@@ -65,6 +68,8 @@ private sealed interface Editor {
         val lesson: Lesson?,
         val existing: Homework?,
     ) : Editor
+
+    data object Bells : Editor
 }
 
 @Composable
@@ -105,6 +110,10 @@ fun SchoolApp(
                     onLanguage(next)
                     closeMenu()
                 },
+                onOpenBells = {
+                    closeMenu()
+                    editor = Editor.Bells
+                },
             )
         },
     ) {
@@ -142,6 +151,21 @@ fun SchoolApp(
                     colors = itemColors,
                 )
                 NavigationBarItem(
+                    selected = route == Routes.Now,
+                    onClick = {
+                        navController.navigate(Routes.Now) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_now)) },
+                    colors = itemColors,
+                )
+                NavigationBarItem(
                     selected = route == Routes.Tasks,
                     onClick = {
                         navController.navigate(Routes.Tasks) {
@@ -171,6 +195,7 @@ fun SchoolApp(
                     lessons = ui.lessons,
                     homework = ui.homework,
                     photos = ui.photos,
+                    weekBells = ui.weekBells,
                     onSelectDate = viewModel::selectDate,
                     onShiftWeek = viewModel::shiftWeek,
                     onSubjectClick = { date, period, lesson ->
@@ -179,6 +204,13 @@ fun SchoolApp(
                     onHomeworkClick = { date, period, lesson, homework ->
                         editor = Editor.HomeworkSlot(date, period, lesson, homework)
                     },
+                    onOpenMenu = openMenu,
+                )
+            }
+            composable(Routes.Now) {
+                NowScreen(
+                    lessons = ui.lessons,
+                    weekBells = ui.weekBells,
                     onOpenMenu = openMenu,
                 )
             }
@@ -211,6 +243,7 @@ fun SchoolApp(
             date = current.date,
             period = current.period,
             existing = current.existing,
+            bells = ui.weekBells.forDay(Dates.schoolDayOfWeek(current.date)).of(current.period),
             onDismiss = { editor = null },
             onSave = viewModel::saveLesson,
             onDelete = viewModel::deleteLesson,
@@ -226,19 +259,24 @@ fun SchoolApp(
             onSave = { homework, subjectIfNeeded, keepFileNames, newUris ->
                 viewModel.saveHomework(homework, keepFileNames, newUris)
                 if (current.lesson == null && subjectIfNeeded.isNotBlank()) {
-                    val bells = SchoolCatalog.bells(current.period)
+                    val slot = ui.weekBells.forDay(Dates.schoolDayOfWeek(current.date)).of(current.period)
                     viewModel.saveLesson(
                         Lesson(
                             dayOfWeek = Dates.schoolDayOfWeek(current.date),
                             period = current.period,
                             subject = subjectIfNeeded,
-                            startTime = bells.first,
-                            endTime = bells.second,
+                            startTime = slot.start,
+                            endTime = slot.end,
                         ),
                     )
                 }
             },
             onDelete = viewModel::deleteHomework,
+        )
+        Editor.Bells -> BellScheduleSheet(
+            weekBells = ui.weekBells,
+            onChange = viewModel::setWeekBells,
+            onDismiss = { editor = null },
         )
         null -> Unit
     }

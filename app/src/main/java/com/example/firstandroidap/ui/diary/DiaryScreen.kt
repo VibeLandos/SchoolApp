@@ -47,11 +47,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.firstandroidap.data.BellSchedule
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
 import com.example.firstandroidap.data.Lesson
 import com.example.firstandroidap.data.SchoolCatalog
+import com.example.firstandroidap.data.WeekBells
 import com.example.firstandroidap.R
 import com.example.firstandroidap.ui.theme.LocalDiaryPalette
 import java.time.LocalDate
@@ -86,6 +88,7 @@ fun DiaryScreen(
     lessons: List<Lesson>,
     homework: List<Homework>,
     photos: List<HomeworkPhoto>,
+    weekBells: WeekBells,
     onSelectDate: (LocalDate) -> Unit,
     onShiftWeek: (Long) -> Unit,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
@@ -143,6 +146,7 @@ fun DiaryScreen(
                 lessons = lessonsByDay[Dates.schoolDayOfWeek(date)].orEmpty(),
                 homework = homeworkByDay[date.toEpochDay()].orEmpty(),
                 photosByHomework = photosByHomework,
+                bells = weekBells.forDay(Dates.schoolDayOfWeek(date)),
                 onSubjectClick = onSubjectClick,
                 onHomeworkClick = onHomeworkClick,
             )
@@ -238,6 +242,7 @@ private fun DiaryPage(
     lessons: List<Lesson>,
     homework: List<Homework>,
     photosByHomework: Map<Long, List<HomeworkPhoto>>,
+    bells: BellSchedule,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
     onHomeworkClick: (date: LocalDate, period: Int, lesson: Lesson?, homework: Homework?) -> Unit,
 ) {
@@ -305,10 +310,13 @@ private fun DiaryPage(
             val period = index + 1
             val lesson = lessonByPeriod[period]
             val item = homeworkByPeriod[period]
+            val slot = bells.of(period)
             DiaryRow(
                 period = period,
                 lesson = lesson,
                 homework = item,
+                startTime = if (lesson != null) slot.start else "",
+                endTime = if (lesson != null) slot.end else "",
                 photoCount = item?.let { photosByHomework[it.id]?.size } ?: 0,
                 onSubjectClick = { onSubjectClick(date, period, lesson) },
                 onHomeworkClick = { onHomeworkClick(date, period, lesson, item) },
@@ -329,6 +337,8 @@ private fun DiaryRow(
     period: Int,
     lesson: Lesson?,
     homework: Homework?,
+    startTime: String,
+    endTime: String,
     photoCount: Int,
     onSubjectClick: () -> Unit,
     onHomeworkClick: () -> Unit,
@@ -341,8 +351,8 @@ private fun DiaryRow(
     } else {
         ""
     }
-    val meta = remember(lesson?.startTime, lesson?.endTime, roomPart) {
-        lesson?.let { formatLessonMeta(it.startTime, it.endTime, roomPart) }.orEmpty()
+    val meta = remember(startTime, endTime, roomPart) {
+        if (lesson == null) "" else formatLessonMeta(startTime, endTime, roomPart)
     }
     val photoLabel = if (photoCount > 0) {
         pluralStringResource(R.plurals.photo_count, photoCount, photoCount)

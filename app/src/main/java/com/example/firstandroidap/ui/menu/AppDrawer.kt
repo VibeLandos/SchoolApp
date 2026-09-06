@@ -25,6 +25,7 @@ fun AppDrawer(
     onMode: (ThemeMode) -> Unit,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
+    onOpenBells: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
     ModalDrawerSheet(
@@ -70,6 +71,20 @@ fun AppDrawer(
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
             }
+            Text(
+                text = stringResource(R.string.menu_schedule),
+                color = palette.gold,
+                fontFamily = FontFamily.Serif,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 20.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.menu_bells)) },
+                selected = false,
+                onClick = onOpenBells,
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
         }
     }
 }

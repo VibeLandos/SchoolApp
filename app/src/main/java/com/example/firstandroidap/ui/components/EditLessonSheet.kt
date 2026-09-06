@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.example.firstandroidap.R
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Lesson
-import com.example.firstandroidap.data.SchoolCatalog
+import com.example.firstandroidap.data.BellPeriod
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -43,11 +43,11 @@ fun EditLessonSheet(
     date: LocalDate,
     period: Int,
     existing: Lesson?,
+    bells: BellPeriod,
     onDismiss: () -> Unit,
     onSave: (Lesson) -> Unit,
     onDelete: (Lesson) -> Unit,
 ) {
-    val bells = SchoolCatalog.bells(period)
     var subject by remember(existing) { mutableStateOf(existing?.subject.orEmpty()) }
     var room by remember(existing) { mutableStateOf(existing?.room.orEmpty()) }
 
@@ -80,7 +80,7 @@ fun EditLessonSheet(
                 modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
             )
             Text(
-                text = "${bells.first}–${bells.second}",
+                text = "${bells.start}–${bells.end}",
                 fontSize = 13.sp,
                 modifier = Modifier.padding(bottom = 12.dp),
             )
@@ -123,8 +123,8 @@ fun EditLessonSheet(
                             dayOfWeek = Dates.schoolDayOfWeek(date),
                             period = period,
                             subject = subject.trim(),
-                            startTime = bells.first,
-                            endTime = bells.second,
+                            startTime = bells.start,
+                            endTime = bells.end,
                             room = room.trim(),
                         ),
                     )

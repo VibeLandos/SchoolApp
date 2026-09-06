@@ -9,6 +9,7 @@ import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
 import com.example.firstandroidap.data.Lesson
+import com.example.firstandroidap.data.WeekBells
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,10 +25,12 @@ data class DiaryUiState(
     val lessons: List<Lesson> = emptyList(),
     val homework: List<Homework> = emptyList(),
     val photos: List<HomeworkPhoto> = emptyList(),
+    val weekBells: WeekBells = WeekBells(),
 )
 
 class SchoolViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = (application as SchoolApplication).repository
+    private val settings = (application as SchoolApplication).themeSettings
     private val selectedDate = MutableStateFlow(Dates.todaySchoolDate())
 
     val uiState: StateFlow<DiaryUiState> = combine(
@@ -35,13 +38,15 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         repository.lessons,
         repository.homework,
         repository.photos,
-    ) { date, lessons, homework, photos ->
+        settings.weekBells,
+    ) { date, lessons, homework, photos, weekBells ->
         DiaryUiState(
             selectedDate = date,
             weekDates = Dates.weekDates(date),
             lessons = lessons,
             homework = homework,
             photos = photos,
+            weekBells = weekBells,
         )
     }.stateIn(
         viewModelScope,
@@ -85,5 +90,9 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleHomework(homework: Homework) {
         viewModelScope.launch { repository.toggleHomework(homework) }
+    }
+
+    fun setWeekBells(value: WeekBells) {
+        settings.setWeekBells(value)
     }
 }
