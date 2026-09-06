@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -30,10 +35,8 @@ import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
 import com.example.firstandroidap.data.Lesson
 import com.example.firstandroidap.data.subjectFor
-import com.example.firstandroidap.ui.theme.CoverGold
-import com.example.firstandroidap.ui.theme.FaintInk
-import com.example.firstandroidap.ui.theme.HomeworkInk
-import com.example.firstandroidap.ui.theme.Paper
+import com.example.firstandroidap.R
+import com.example.firstandroidap.ui.theme.LocalDiaryPalette
 import java.time.LocalDate
 
 private enum class TaskFilter { OPEN, DONE, ALL }
@@ -45,7 +48,9 @@ fun HomeworkListScreen(
     photos: List<HomeworkPhoto>,
     onOpenDate: (LocalDate) -> Unit,
     onToggle: (Homework) -> Unit,
+    onOpenMenu: () -> Unit,
 ) {
+    val palette = LocalDiaryPalette.current
     var filter by remember { mutableStateOf(TaskFilter.OPEN) }
     val today = remember { LocalDate.now().toEpochDay() }
 
@@ -60,13 +65,25 @@ fun HomeworkListScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        Text(
-            text = "Задания",
-            color = CoverGold,
-            fontFamily = FontFamily.Serif,
-            fontSize = 28.sp,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-        )
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onOpenMenu) {
+                Icon(
+                    Icons.Outlined.Menu,
+                    contentDescription = stringResource(R.string.cd_open_menu),
+                    tint = palette.gold,
+                )
+            }
+            Text(
+                text = "Задания",
+                color = palette.gold,
+                fontFamily = FontFamily.Serif,
+                fontSize = 28.sp,
+                modifier = Modifier.padding(end = 20.dp, top = 12.dp, bottom = 12.dp),
+            )
+        }
         Row(
             Modifier.padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -91,7 +108,7 @@ fun HomeworkListScreen(
         if (visible.isEmpty()) {
             Text(
                 text = "Пока пусто — запиши д/з на странице дневника, в клетке справа.",
-                color = CoverGold.copy(alpha = 0.8f),
+                color = palette.gold.copy(alpha = 0.8f),
                 fontFamily = FontFamily.Serif,
                 modifier = Modifier.padding(20.dp),
             )
@@ -118,13 +135,13 @@ fun HomeworkListScreen(
                         Column(Modifier.weight(1f)) {
                             Text(
                                 text = "${subjectFor(item, lessons)} · урок ${item.period}",
-                                color = CoverGold,
+                                color = palette.gold,
                                 fontWeight = FontWeight.Medium,
                             )
                             if (item.description.isNotBlank()) {
                                 Text(
                                     text = item.description,
-                                    color = if (item.isDone) CoverGold.copy(alpha = 0.6f) else Paper,
+                                    color = if (item.isDone) palette.gold.copy(alpha = 0.6f) else palette.paper,
                                     fontFamily = FontFamily.Serif,
                                     textDecoration = if (item.isDone) TextDecoration.LineThrough else TextDecoration.None,
                                 )
@@ -132,7 +149,7 @@ fun HomeworkListScreen(
                             if (photoCount > 0) {
                                 Text(
                                     text = "$photoCount фото",
-                                    color = CoverGold.copy(alpha = 0.85f),
+                                    color = palette.gold.copy(alpha = 0.85f),
                                     fontSize = 12.sp,
                                 )
                             }
@@ -143,7 +160,7 @@ fun HomeworkListScreen(
                                     append(Dates.formatFull(date))
                                     if (overdue) append(" · просрочено")
                                 },
-                                color = if (overdue) HomeworkInk else FaintInk,
+                                color = if (overdue) palette.homeworkInk else palette.faintInk,
                                 fontSize = 12.sp,
                             )
                         }

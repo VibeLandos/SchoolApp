@@ -5,21 +5,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.firstandroidap.R
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,10 +39,11 @@ import com.example.firstandroidap.ui.components.EditHomeworkSheet
 import com.example.firstandroidap.ui.components.EditLessonSheet
 import com.example.firstandroidap.ui.diary.DiaryScreen
 import com.example.firstandroidap.ui.homework.HomeworkListScreen
-import com.example.firstandroidap.ui.theme.CoverBurgundy
-import com.example.firstandroidap.ui.theme.CoverDeep
-import com.example.firstandroidap.ui.theme.CoverGold
+import com.example.firstandroidap.ui.menu.AppDrawer
+import com.example.firstandroidap.ui.theme.LocalDiaryPalette
+import com.example.firstandroidap.ui.theme.ThemeMode
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 private object Routes {
     const val Diary = "diary"
@@ -59,25 +66,46 @@ private sealed interface Editor {
 }
 
 @Composable
-fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
+fun SchoolApp(
+    viewModel: SchoolViewModel = viewModel(),
+    themeMode: ThemeMode,
+    onThemeMode: (ThemeMode) -> Unit,
+) {
     val ui by viewModel.uiState.collectAsState()
+    val palette = LocalDiaryPalette.current
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route
     var editor by remember { mutableStateOf<Editor?>(null) }
     var lastDiaryTapAt by remember { mutableLongStateOf(0L) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val menuScope = rememberCoroutineScope()
+    val openMenu: () -> Unit = { menuScope.launch { drawerState.open() } }
 
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = false,
+        drawerContent = {
+            AppDrawer(
+                mode = themeMode,
+                onMode = { mode ->
+                    onThemeMode(mode)
+                    menuScope.launch { drawerState.close() }
+                },
+            )
+        },
+    ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = CoverBurgundy,
+        containerColor = palette.cover,
         bottomBar = {
-            NavigationBar(containerColor = CoverDeep) {
+            NavigationBar(containerColor = palette.coverDeep) {
                 val itemColors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = CoverDeep,
-                    selectedTextColor = CoverGold,
-                    indicatorColor = CoverGold,
-                    unselectedIconColor = CoverGold.copy(alpha = 0.7f),
-                    unselectedTextColor = CoverGold.copy(alpha = 0.7f),
+                    selectedIconColor = palette.coverDeep,
+                    selectedTextColor = palette.gold,
+                    indicatorColor = palette.gold,
+                    unselectedIconColor = palette.gold.copy(alpha = 0.7f),
+                    unselectedTextColor = palette.gold.copy(alpha = 0.7f),
                 )
                 NavigationBarItem(
                     selected = route == Routes.Diary,
@@ -97,7 +125,7 @@ fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
                         lastDiaryTapAt = now
                     },
                     icon = { Icon(Icons.Outlined.MenuBook, contentDescription = null) },
-                    label = { Text("Дневник") },
+                    label = { Text(stringResource(R.string.nav_diary)) },
                     colors = itemColors,
                 )
                 NavigationBarItem(
@@ -112,7 +140,7 @@ fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
                         }
                     },
                     icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = null) },
-                    label = { Text("Задания") },
+                    label = { Text(stringResource(R.string.nav_tasks)) },
                     colors = itemColors,
                 )
             }
@@ -138,6 +166,7 @@ fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
                     onHomeworkClick = { date, period, lesson, homework ->
                         editor = Editor.HomeworkSlot(date, period, lesson, homework)
                     },
+                    onOpenMenu = openMenu,
                 )
             }
             composable(Routes.Tasks) {
@@ -158,6 +187,7 @@ fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
                         }
                     },
                     onToggle = viewModel::toggleHomework,
+                    onOpenMenu = openMenu,
                 )
             }
         }
@@ -198,5 +228,6 @@ fun SchoolApp(viewModel: SchoolViewModel = viewModel()) {
             onDelete = viewModel::deleteHomework,
         )
         null -> Unit
+    }
     }
 }

@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Дневник</string>
+    <string name="nav_diary">Дневник</string>
+    <string name="nav_tasks">Задания</string>
+    <string name="cd_open_menu">Меню</string>
+    <string name="cd_prev_week">Предыдущая неделя</string>
+    <string name="cd_next_week">Следующая неделя</string>
+    <string name="menu_appearance">Оформление</string>
+    <string name="theme_cover">Обложка дневника</string>
+    <string name="theme_system">Цвета системы</string>
+    <string name="theme_dark">Ночная страница</string>
 </resources>

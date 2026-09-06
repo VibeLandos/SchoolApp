@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import com.example.firstandroidap.ui.SchoolApp
 import com.example.firstandroidap.ui.theme.CoverDeep
@@ -17,9 +19,14 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(CoverDeep.toArgb()),
             navigationBarStyle = SystemBarStyle.dark(CoverDeep.toArgb()),
         )
+        val settings = (application as SchoolApplication).themeSettings
         setContent {
-            DiaryTheme(darkTheme = false) {
-                SchoolApp()
+            val mode by settings.mode.collectAsState()
+            DiaryTheme(mode = mode) {
+                SchoolApp(
+                    themeMode = mode,
+                    onThemeMode = settings::setMode,
+                )
             }
         }
     }

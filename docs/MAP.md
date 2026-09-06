@@ -7,9 +7,9 @@ Android-приложение **Дневник**: расписание по дн�
 | Файл | Роль |
 |---|---|
 | `app/src/main/AndroidManifest.xml` | Application + launcher Activity |
-| `app/src/main/java/com/example/firstandroidap/SchoolApplication.kt` | Room + `SchoolRepository` |
-| `app/src/main/java/com/example/firstandroidap/MainActivity.kt` | Compose, `DiaryTheme`, `SchoolApp` |
-| `app/src/main/java/com/example/firstandroidap/ui/SchoolApp.kt` | Навигация, нижнее меню (двойной тап «Дневник» → сегодня), шиты добавления |
+| `app/src/main/java/com/example/firstandroidap/SchoolApplication.kt` | Room + `SchoolRepository` + `ThemeSettings` |
+| `app/src/main/java/com/example/firstandroidap/MainActivity.kt` | Compose, `DiaryTheme(mode)`, `SchoolApp` |
+| `app/src/main/java/com/example/firstandroidap/ui/SchoolApp.kt` | Навигация, нижнее меню, drawer оформления (без жеста с края), шиты |
 | `app/src/main/java/com/example/firstandroidap/ui/SchoolViewModel.kt` | Состояние дня/недели, запись в репозиторий |
 
 ## Данные (`.../data/`)
@@ -22,6 +22,7 @@ Android-приложение **Дневник**: расписание по дн�
 | `SchoolRepository.kt` | upsert/удаление; пустой текст и без фото = удалить д/з |
 | `HomeworkPhotoStore.kt` | копии фото в `filesDir/homework_photos`, до 8 штук |
 | `Catalog.kt` | предметы, звонки 1–8, даты (пн–сб), подпись предмета для ДЗ |
+| `ThemeSettings.kt` | режим темы: обложка / система / ночная страница |
 
 ## Экраны (`.../ui/`)
 
@@ -32,9 +33,10 @@ Android-приложение **Дневник**: расписание по дн�
 | `homework/HomeworkListScreen.kt` | Вкладка «Задания»: список д/з, переход на день |
 | `components/EditHomeworkSheet.kt` | Вписать/стереть д/з, прикрепить несколько фото |
 | `components/EditLessonSheet.kt` | Предмет + кабинет; время из звонков, не вручную |
-| `theme/Color.kt`, `Type.kt`, `Theme.kt` | Бордовая обложка + кремовая страница |
+| `theme/Color.kt`, `Type.kt`, `Theme.kt` | Палитры обложки, ночной страницы и Material You; `LocalDiaryPalette` |
+| `menu/AppDrawer.kt` | Боковое меню: переключатель оформления |
 
-Нижние вкладки: **Дневник** (`diary`), **Задания** (`tasks`).
+Нижние вкладки: **Дневник** (`diary`), **Задания** (`tasks`). Меню: иконка «гамбургер» на обоих экранах.
 
 ## Сборка
 

@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -31,7 +32,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,13 +45,8 @@ import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
 import com.example.firstandroidap.data.Lesson
 import com.example.firstandroidap.data.SchoolCatalog
-import com.example.firstandroidap.ui.theme.CoverGold
-import com.example.firstandroidap.ui.theme.FaintInk
-import com.example.firstandroidap.ui.theme.HomeworkInk
-import com.example.firstandroidap.ui.theme.Ink
-import com.example.firstandroidap.ui.theme.MarginRed
-import com.example.firstandroidap.ui.theme.Paper
-import com.example.firstandroidap.ui.theme.PaperLine
+import com.example.firstandroidap.R
+import com.example.firstandroidap.ui.theme.LocalDiaryPalette
 import java.time.LocalDate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -69,6 +65,7 @@ fun DiaryScreen(
     onShiftWeek: (Long) -> Unit,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
     onHomeworkClick: (date: LocalDate, period: Int, lesson: Lesson?, homework: Homework?) -> Unit,
+    onOpenMenu: () -> Unit,
 ) {
     val photosByHomework = remember(photos) { photos.groupBy { it.homeworkId } }
     val homeworkByDay = remember(homework) { homework.groupBy { it.epochDay } }
@@ -105,6 +102,7 @@ fun DiaryScreen(
                 pagerScope.launch { pagerState.animateScrollToPage(target) }
             },
             onShiftWeek = onShiftWeek,
+            onOpenMenu = onOpenMenu,
         )
         HorizontalPager(
             state = pagerState,
@@ -133,22 +131,31 @@ private fun WeekStrip(
     weekDates: List<LocalDate>,
     onSelectDate: (LocalDate) -> Unit,
     onShiftWeek: (Long) -> Unit,
+    onOpenMenu: () -> Unit,
 ) {
+    val palette = LocalDiaryPalette.current
     Column(Modifier.padding(bottom = 4.dp)) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            IconButton(onClick = onOpenMenu) {
+                Icon(
+                    Icons.Outlined.Menu,
+                    contentDescription = stringResource(R.string.cd_open_menu),
+                    tint = palette.gold,
+                )
+            }
             IconButton(onClick = { onShiftWeek(-1) }) {
                 Icon(
                     Icons.Filled.KeyboardArrowLeft,
-                    contentDescription = "Предыдущая неделя",
-                    tint = CoverGold,
+                    contentDescription = stringResource(R.string.cd_prev_week),
+                    tint = palette.gold,
                 )
             }
             Text(
                 text = Dates.weekRangeLabel(weekDates),
-                color = CoverGold,
+                color = palette.gold,
                 fontFamily = FontFamily.Serif,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
@@ -157,8 +164,8 @@ private fun WeekStrip(
             IconButton(onClick = { onShiftWeek(1) }) {
                 Icon(
                     Icons.Filled.KeyboardArrowRight,
-                    contentDescription = "Следующая неделя",
-                    tint = CoverGold,
+                    contentDescription = stringResource(R.string.cd_next_week),
+                    tint = palette.gold,
                 )
             }
         }
@@ -178,17 +185,17 @@ private fun WeekStrip(
                 ) {
                     Text(
                         text = Dates.weekdayShort(date),
-                        color = CoverGold.copy(alpha = if (selected) 1f else 0.7f),
+                        color = palette.gold.copy(alpha = if (selected) 1f else 0.7f),
                         fontSize = 12.sp,
                     )
                     Text(
                         text = date.dayOfMonth.toString(),
-                        color = if (selected) CoverDeepText else CoverGold,
+                        color = if (selected) palette.onGold else palette.gold,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         modifier = if (selected) {
                             Modifier
-                                .background(CoverGold, RoundedCornerShape(10.dp))
+                                .background(palette.gold, RoundedCornerShape(10.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         } else {
                             Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -199,8 +206,6 @@ private fun WeekStrip(
         }
     }
 }
-
-private val CoverDeepText = Color(0xFF4C1C23)
 
 @Composable
 private fun DiaryPage(
@@ -215,12 +220,13 @@ private fun DiaryPage(
     val homeworkByPeriod = remember(homework) { homework.associateBy { it.period } }
     val weekday = remember(date) { Dates.weekdayName(date).uppercase() }
     val fullDate = remember(date) { Dates.formatFull(date) }
+    val palette = LocalDiaryPalette.current
 
     Column(
         Modifier
             .fillMaxSize()
-            .background(Paper, RoundedCornerShape(2.dp))
-            .border(1.dp, PaperLine, RoundedCornerShape(2.dp))
+            .background(palette.paper, RoundedCornerShape(2.dp))
+            .border(1.dp, palette.paperLine, RoundedCornerShape(2.dp))
             .padding(top = 16.dp, bottom = 20.dp),
     ) {
         Text(
@@ -228,14 +234,14 @@ private fun DiaryPage(
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.SemiBold,
             fontSize = 22.sp,
-            color = Ink,
+            color = palette.ink,
             modifier = Modifier.padding(start = 20.dp, end = 16.dp),
         )
         Text(
             text = fullDate,
             fontFamily = FontFamily.Serif,
             fontSize = 14.sp,
-            color = FaintInk,
+            color = palette.faintInk,
             modifier = Modifier.padding(start = 20.dp, end = 16.dp, bottom = 12.dp),
         )
         Row(
@@ -245,7 +251,7 @@ private fun DiaryPage(
         ) {
             Text(
                 text = "№",
-                color = MarginRed,
+                color = palette.marginRed,
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
@@ -253,7 +259,7 @@ private fun DiaryPage(
             )
             Text(
                 text = "ПРЕДМЕТ",
-                color = FaintInk,
+                color = palette.faintInk,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 letterSpacing = 0.8.sp,
@@ -261,7 +267,7 @@ private fun DiaryPage(
             )
             Text(
                 text = "ДОМАШНЕЕ ЗАДАНИЕ",
-                color = FaintInk,
+                color = palette.faintInk,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 letterSpacing = 0.8.sp,
@@ -284,7 +290,7 @@ private fun DiaryPage(
         }
         Text(
             text = "Нажми клетку, чтобы вписать. Листай день свайпом, неделю — стрелками.",
-            color = FaintInk,
+            color = palette.faintInk,
             fontSize = 12.sp,
             fontFamily = FontFamily.Serif,
             modifier = Modifier.padding(start = 20.dp, top = 16.dp, end = 16.dp),
@@ -301,6 +307,7 @@ private fun DiaryRow(
     onSubjectClick: () -> Unit,
     onHomeworkClick: () -> Unit,
 ) {
+    val palette = LocalDiaryPalette.current
     Row(
         Modifier
             .fillMaxWidth()
@@ -310,7 +317,7 @@ private fun DiaryRow(
     ) {
         Text(
             text = period.toString(),
-            color = MarginRed,
+            color = palette.marginRed,
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
@@ -325,11 +332,11 @@ private fun DiaryRow(
             verticalArrangement = Arrangement.Center,
         ) {
             if (lesson == null) {
-                Text("предмет", color = FaintInk.copy(alpha = 0.7f), fontSize = 14.sp)
+                Text("предмет", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp)
             } else {
                 Text(
                     text = lesson.subject,
-                    color = Ink,
+                    color = palette.ink,
                     fontWeight = FontWeight.Medium,
                     fontSize = 15.sp,
                     maxLines = 2,
@@ -342,7 +349,7 @@ private fun DiaryRow(
                     lesson.room.takeIf { it.isNotBlank() }?.let { "каб. $it" },
                 ).joinToString(" · ")
                 if (meta.isNotBlank()) {
-                    Text(meta, color = FaintInk, fontSize = 11.sp, maxLines = 1)
+                    Text(meta, color = palette.faintInk, fontSize = 11.sp, maxLines = 1)
                 }
             }
         }
@@ -350,7 +357,7 @@ private fun DiaryRow(
             Modifier
                 .width(1.dp)
                 .height(36.dp)
-                .background(PaperLine),
+                .background(palette.paperLine),
         )
         Column(
             Modifier
@@ -361,13 +368,13 @@ private fun DiaryRow(
         ) {
             when {
                 homework == null -> {
-                    Text("д/з", color = FaintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+                    Text("д/з", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
                 }
                 else -> {
                     if (homework.description.isNotBlank()) {
                         Text(
                             text = homework.description,
-                            color = if (homework.isDone) FaintInk else HomeworkInk,
+                            color = if (homework.isDone) palette.faintInk else palette.homeworkInk,
                             fontFamily = FontFamily.Serif,
                             fontSize = 15.sp,
                             maxLines = 2,
@@ -382,11 +389,11 @@ private fun DiaryRow(
                     if (photoCount > 0) {
                         Text(
                             text = "$photoCount фото",
-                            color = FaintInk,
+                            color = palette.faintInk,
                             fontSize = 12.sp,
                         )
                     } else if (homework.description.isBlank()) {
-                        Text("д/з", color = FaintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+                        Text("д/з", color = palette.faintInk.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = FontFamily.Serif)
                     }
                 }
             }
