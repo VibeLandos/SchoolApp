@@ -52,7 +52,6 @@ import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.HomeworkPhoto
 import com.example.firstandroidap.data.Lesson
-import com.example.firstandroidap.data.SchoolCatalog
 import com.example.firstandroidap.data.WeekBells
 import com.example.firstandroidap.R
 import com.example.firstandroidap.ui.theme.LocalDiaryPalette
@@ -93,6 +92,7 @@ fun DiaryScreen(
     onShiftWeek: (Long) -> Unit,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
     onHomeworkClick: (date: LocalDate, period: Int, lesson: Lesson?, homework: Homework?) -> Unit,
+    onAddLesson: (date: LocalDate) -> Unit,
     onOpenMenu: () -> Unit,
 ) {
     val photosByHomework = remember(photos) { photos.groupBy { it.homeworkId } }
@@ -149,6 +149,7 @@ fun DiaryScreen(
                 bells = weekBells.forDay(Dates.schoolDayOfWeek(date)),
                 onSubjectClick = onSubjectClick,
                 onHomeworkClick = onHomeworkClick,
+                onAddLesson = onAddLesson,
             )
         }
     }
@@ -245,8 +246,9 @@ private fun DiaryPage(
     bells: BellSchedule,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
     onHomeworkClick: (date: LocalDate, period: Int, lesson: Lesson?, homework: Homework?) -> Unit,
+    onAddLesson: (date: LocalDate) -> Unit,
 ) {
-    val lessonByPeriod = remember(lessons) { lessons.associateBy { it.period } }
+    val ordered = remember(lessons) { lessons.sortedBy { it.period } }
     val homeworkByPeriod = remember(homework) { homework.associateBy { it.period } }
     val locale = Locale.getDefault()
     val weekday = remember(date, locale) { Dates.weekdayName(date).uppercase(locale) }
@@ -306,22 +308,39 @@ private fun DiaryPage(
             )
         }
         Spacer(Modifier.height(4.dp))
-        repeat(SchoolCatalog.PERIODS) { index ->
-            val period = index + 1
-            val lesson = lessonByPeriod[period]
-            val item = homeworkByPeriod[period]
-            val slot = bells.of(period)
-            DiaryRow(
-                period = period,
-                lesson = lesson,
-                homework = item,
-                startTime = if (lesson != null) slot.start else "",
-                endTime = if (lesson != null) slot.end else "",
-                photoCount = item?.let { photosByHomework[it.id]?.size } ?: 0,
-                onSubjectClick = { onSubjectClick(date, period, lesson) },
-                onHomeworkClick = { onHomeworkClick(date, period, lesson, item) },
+        if (ordered.isEmpty()) {
+            Text(
+                text = stringResource(R.string.diary_empty_day),
+                color = palette.faintInk,
+                fontSize = 15.sp,
+                fontFamily = FontFamily.Serif,
+                modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
             )
+        } else {
+            ordered.forEach { lesson ->
+                val item = homeworkByPeriod[lesson.period]
+                val slot = bells.of(lesson.period)
+                DiaryRow(
+                    period = lesson.period,
+                    lesson = lesson,
+                    homework = item,
+                    startTime = slot.start,
+                    endTime = slot.end,
+                    photoCount = item?.let { photosByHomework[it.id]?.size } ?: 0,
+                    onSubjectClick = { onSubjectClick(date, lesson.period, lesson) },
+                    onHomeworkClick = { onHomeworkClick(date, lesson.period, lesson, item) },
+                )
+            }
         }
+        Text(
+            text = stringResource(R.string.add_lesson),
+            color = palette.marginRed,
+            fontFamily = FontFamily.Serif,
+            fontSize = 15.sp,
+            modifier = Modifier
+                .padding(start = 20.dp, top = 12.dp, end = 16.dp)
+                .clickable { onAddLesson(date) },
+        )
         Text(
             text = stringResource(R.string.diary_hint),
             color = palette.faintInk,

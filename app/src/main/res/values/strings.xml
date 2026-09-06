@@ -61,7 +61,10 @@
     <string name="language_english">English</string>
     <string name="col_subject">ПРЕДМЕТ</string>
     <string name="col_homework">ДОМАШНЕЕ ЗАДАНИЕ</string>
-    <string name="diary_hint">Нажми клетку, чтобы вписать. Листай день свайпом, неделю — стрелками.</string>
+    <string name="diary_hint">Листай день свайпом, неделю — стрелками. Урок — кнопкой внизу страницы.</string>
+    <string name="diary_empty_day">Пока нет уроков</string>
+    <string name="add_lesson">+ Добавить урок</string>
+    <string name="label_period">Номер урока</string>
     <string name="placeholder_subject">предмет</string>
     <string name="placeholder_homework">д/з</string>
     <string name="room_short">каб. %s</string>

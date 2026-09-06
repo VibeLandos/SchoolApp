@@ -37,6 +37,7 @@ import com.example.firstandroidap.data.AppLanguage
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Homework
 import com.example.firstandroidap.data.Lesson
+import com.example.firstandroidap.data.SchoolCatalog
 import com.example.firstandroidap.ui.components.EditHomeworkSheet
 import com.example.firstandroidap.ui.components.EditLessonSheet
 import com.example.firstandroidap.ui.diary.DiaryScreen
@@ -204,6 +205,17 @@ fun SchoolApp(
                     onHomeworkClick = { date, period, lesson, homework ->
                         editor = Editor.HomeworkSlot(date, period, lesson, homework)
                     },
+                    onAddLesson = { date ->
+                        val used = ui.lessons
+                            .filter { it.dayOfWeek == Dates.schoolDayOfWeek(date) }
+                            .map { it.period }
+                            .toSet()
+                        editor = Editor.LessonSlot(
+                            date,
+                            SchoolCatalog.nextFreePeriod(used),
+                            null,
+                        )
+                    },
                     onOpenMenu = openMenu,
                 )
             }
@@ -239,15 +251,19 @@ fun SchoolApp(
     }
 
     when (val current = editor) {
-        is Editor.LessonSlot -> EditLessonSheet(
-            date = current.date,
-            period = current.period,
-            existing = current.existing,
-            bells = ui.weekBells.forDay(Dates.schoolDayOfWeek(current.date)).of(current.period),
-            onDismiss = { editor = null },
-            onSave = viewModel::saveLesson,
-            onDelete = viewModel::deleteLesson,
-        )
+        is Editor.LessonSlot -> {
+            val day = Dates.schoolDayOfWeek(current.date)
+            EditLessonSheet(
+                date = current.date,
+                period = current.period,
+                existing = current.existing,
+                usedPeriods = ui.lessons.filter { it.dayOfWeek == day }.map { it.period }.toSet(),
+                bells = ui.weekBells.forDay(day),
+                onDismiss = { editor = null },
+                onSave = viewModel::saveLesson,
+                onDelete = viewModel::deleteLesson,
+            )
+        }
         is Editor.HomeworkSlot -> EditHomeworkSheet(
             date = current.date,
             period = current.period,

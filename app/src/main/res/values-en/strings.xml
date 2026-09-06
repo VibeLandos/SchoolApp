@@ -61,7 +61,10 @@
     <string name="language_english">English</string>
     <string name="col_subject">SUBJECT</string>
     <string name="col_homework">HOMEWORK</string>
-    <string name="diary_hint">Tap a cell to write. Swipe to change the day, use the arrows for the week.</string>
+    <string name="diary_hint">Swipe to change the day, use the arrows for the week. Add a lesson with the button at the bottom.</string>
+    <string name="diary_empty_day">No lessons yet</string>
+    <string name="add_lesson">+ Add lesson</string>
+    <string name="label_period">Period number</string>
     <string name="placeholder_subject">subject</string>
     <string name="placeholder_homework">hw</string>
     <string name="room_short">rm. %s</string>

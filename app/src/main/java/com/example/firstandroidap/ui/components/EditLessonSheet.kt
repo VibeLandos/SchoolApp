@@ -32,9 +32,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.firstandroidap.R
+import com.example.firstandroidap.data.BellSchedule
 import com.example.firstandroidap.data.Dates
 import com.example.firstandroidap.data.Lesson
-import com.example.firstandroidap.data.BellPeriod
+import com.example.firstandroidap.data.SchoolCatalog
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -43,13 +44,20 @@ fun EditLessonSheet(
     date: LocalDate,
     period: Int,
     existing: Lesson?,
-    bells: BellPeriod,
+    usedPeriods: Set<Int>,
+    bells: BellSchedule,
     onDismiss: () -> Unit,
     onSave: (Lesson) -> Unit,
     onDelete: (Lesson) -> Unit,
 ) {
     var subject by remember(existing) { mutableStateOf(existing?.subject.orEmpty()) }
     var room by remember(existing) { mutableStateOf(existing?.room.orEmpty()) }
+    var chosenPeriod by remember(existing, period) { mutableStateOf(period) }
+    val slot = bells.of(chosenPeriod)
+    val periodChoices = remember(usedPeriods, chosenPeriod) {
+        val maxRegular = maxOf(SchoolCatalog.PERIODS, chosenPeriod, usedPeriods.maxOrNull() ?: 0)
+        (0..maxRegular).toList()
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -65,9 +73,9 @@ fun EditLessonSheet(
         ) {
             Text(
                 text = if (existing == null) {
-                    stringResource(R.string.lesson_title, period)
+                    stringResource(R.string.lesson_title, chosenPeriod)
                 } else {
-                    stringResource(R.string.lesson_title_edit, period)
+                    stringResource(R.string.lesson_title_edit, chosenPeriod)
                 },
                 fontSize = 22.sp,
             )
@@ -80,10 +88,30 @@ fun EditLessonSheet(
                 modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
             )
             Text(
-                text = "${bells.start}–${bells.end}",
+                text = "${slot.start}–${slot.end}",
                 fontSize = 13.sp,
-                modifier = Modifier.padding(bottom = 12.dp),
+                modifier = Modifier.padding(bottom = 8.dp),
             )
+            Text(
+                text = stringResource(R.string.label_period),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                periodChoices.forEach { number ->
+                    val taken = number != chosenPeriod && number in usedPeriods
+                    FilterChip(
+                        selected = chosenPeriod == number,
+                        onClick = { if (!taken) chosenPeriod = number },
+                        enabled = !taken,
+                        label = { Text(number.toString()) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = subject,
                 onValueChange = { subject = it },
@@ -121,10 +149,10 @@ fun EditLessonSheet(
                         Lesson(
                             id = existing?.id ?: 0,
                             dayOfWeek = Dates.schoolDayOfWeek(date),
-                            period = period,
+                            period = chosenPeriod,
                             subject = subject.trim(),
-                            startTime = bells.start,
-                            endTime = bells.end,
+                            startTime = slot.start,
+                            endTime = slot.end,
                             room = room.trim(),
                         ),
                     )

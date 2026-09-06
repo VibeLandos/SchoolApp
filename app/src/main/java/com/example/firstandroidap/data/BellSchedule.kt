@@ -38,8 +38,28 @@ data class BellRecipe(
 }
 
 data class BellSchedule(val periods: List<BellPeriod>) {
-    fun of(period: Int): BellPeriod =
-        periods.getOrNull(period - 1) ?: BellRecipe.standard().build().of(period)
+    fun of(period: Int): BellPeriod {
+        if (period == 0) {
+            val first = periods.firstOrNull() ?: BellRecipe.standard().build().periods.first()
+            val firstStart = parseHm(first.start) ?: LocalTime.of(8, 0)
+            val end = firstStart.minusMinutes(10)
+            val start = end.minusMinutes(45)
+            return BellPeriod(formatHm(start), formatHm(end))
+        }
+        periods.getOrNull(period - 1)?.let { return it }
+        if (period < 1) return BellRecipe.standard().build().of(1)
+        var cursor = parseHm(periods.lastOrNull()?.end) ?: LocalTime.of(15, 20)
+        var generated = periods.size
+        var slot = periods.lastOrNull() ?: BellRecipe.standard().build().of(1)
+        while (generated < period) {
+            val start = cursor.plusMinutes(10)
+            val end = start.plusMinutes(45)
+            slot = BellPeriod(formatHm(start), formatHm(end))
+            cursor = end
+            generated++
+        }
+        return slot
+    }
 
     fun replacing(period: Int, start: String? = null, end: String? = null): BellSchedule {
         val filled = (1..SchoolCatalog.PERIODS).map { of(it) }.toMutableList()

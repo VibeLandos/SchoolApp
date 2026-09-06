@@ -9,6 +9,16 @@ import java.util.Locale
 object SchoolCatalog {
     const val PERIODS = 8
 
+    fun nextFreePeriod(used: Set<Int>): Int {
+        for (period in 1..PERIODS) {
+            if (period !in used) return period
+        }
+        if (0 !in used) return 0
+        var period = PERIODS + 1
+        while (period in used) period++
+        return period
+    }
+
     fun bells(period: Int): Pair<String, String> = when (period) {
         1 -> "08:00" to "08:45"
         2 -> "08:55" to "09:40"
