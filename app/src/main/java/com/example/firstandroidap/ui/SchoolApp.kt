@@ -111,6 +111,11 @@ fun SchoolApp(
                     onLanguage(next)
                     closeMenu()
                 },
+                schoolDays = ui.schoolDays,
+                onSchoolDays = { days ->
+                    viewModel.setSchoolDays(days)
+                    closeMenu()
+                },
                 onOpenBells = {
                     closeMenu()
                     editor = Editor.Bells
@@ -197,6 +202,7 @@ fun SchoolApp(
                     homework = ui.homework,
                     photos = ui.photos,
                     weekBells = ui.weekBells,
+                    schoolDays = ui.schoolDays,
                     onSelectDate = viewModel::selectDate,
                     onShiftWeek = viewModel::shiftWeek,
                     onSubjectClick = { date, period, lesson ->
@@ -223,6 +229,7 @@ fun SchoolApp(
                 NowScreen(
                     lessons = ui.lessons,
                     weekBells = ui.weekBells,
+                    schoolDays = ui.schoolDays,
                     onOpenMenu = openMenu,
                 )
             }
@@ -232,9 +239,7 @@ fun SchoolApp(
                     homework = ui.homework,
                     photos = ui.photos,
                     onOpenDate = { date ->
-                        viewModel.selectDate(
-                            if (date.dayOfWeek.value == 7) date.plusDays(1) else date,
-                        )
+                        viewModel.selectDate(date)
                         navController.navigate(Routes.Diary) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
@@ -291,6 +296,7 @@ fun SchoolApp(
         )
         Editor.Bells -> BellScheduleSheet(
             weekBells = ui.weekBells,
+            schoolDays = ui.schoolDays,
             onChange = viewModel::setWeekBells,
             onDismiss = { editor = null },
         )

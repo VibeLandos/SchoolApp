@@ -11,6 +11,9 @@
     <string name="menu_appearance">Appearance</string>
     <string name="menu_language">Language</string>
     <string name="menu_schedule">Schedule</string>
+    <string name="menu_week">School week</string>
+    <string name="week_five_days">5 days · Mon–Fri</string>
+    <string name="week_six_days">6 days · Mon–Sat</string>
     <string name="menu_bells">Bells</string>
     <string name="bells_title">Bell schedule</string>
     <string name="bells_quick_title">Quick setup</string>
@@ -39,7 +42,7 @@
     <string name="bells_selected_day">%1$s · %2$s</string>
     <string name="bells_quick_again">Quick setup for the week</string>
     <string name="bells_quick_this_day">Set up this day again</string>
-    <string name="now_sunday">It’s Sunday — no lessons.</string>
+    <string name="now_sunday">It’s a day off — no lessons.</string>
     <string name="now_no_lessons">No lessons written in for today yet.</string>
     <string name="now_until_start">until it starts</string>
     <string name="now_in_lesson">Period %1$d · %2$s</string>

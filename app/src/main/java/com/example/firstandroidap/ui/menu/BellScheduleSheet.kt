@@ -62,10 +62,11 @@ private sealed interface BellsPane {
 @Composable
 fun BellScheduleSheet(
     weekBells: WeekBells,
+    schoolDays: Int,
     onChange: (WeekBells) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val today = Dates.todaySchoolDate().dayOfWeek.value.coerceIn(1, 6)
+    val today = Dates.todaySchoolDate(schoolDays).dayOfWeek.value.coerceIn(1, schoolDays)
     var pane by remember {
         mutableStateOf(
             if (weekBells.setupDone) BellsPane.Editor(today) else BellsPane.Offer,
@@ -133,7 +134,8 @@ fun BellScheduleSheet(
                 )
                 is BellsPane.Editor -> EditorPane(
                     weekBells = weekBells,
-                    day = current.day,
+                    schoolDays = schoolDays,
+                    day = current.day.coerceIn(1, schoolDays),
                     onDay = { pane = BellsPane.Editor(it) },
                     onChange = onChange,
                     onQuickSetup = { forDay ->
@@ -295,6 +297,7 @@ private fun WizardPane(
 @Composable
 private fun EditorPane(
     weekBells: WeekBells,
+    schoolDays: Int,
     day: Int,
     onDay: (Int) -> Unit,
     onChange: (WeekBells) -> Unit,
@@ -303,7 +306,7 @@ private fun EditorPane(
 ) {
     val schedule = weekBells.forDay(day)
     val custom = weekBells.isCustom(day)
-    val sampleWeek = remember { Dates.weekDates(Dates.todaySchoolDate()) }
+    val sampleWeek = remember(schoolDays) { Dates.weekDates(Dates.todaySchoolDate(schoolDays), schoolDays) }
     val selectedDate = sampleWeek.first { it.dayOfWeek.value == day }
     Text(stringResource(R.string.bells_title), fontSize = 22.sp)
     Text(

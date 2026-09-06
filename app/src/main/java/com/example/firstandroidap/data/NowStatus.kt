@@ -1,6 +1,5 @@
 package com.example.firstandroidap.data
 
-import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -43,8 +42,9 @@ fun nowStatus(
     time: LocalTime,
     lessons: List<Lesson>,
     bells: BellSchedule,
+    schoolDays: Int = 6,
 ): NowStatus {
-    if (date.dayOfWeek == DayOfWeek.SUNDAY) return NowStatus.Sunday
+    if (Dates.isWeekend(date, schoolDays)) return NowStatus.Sunday
     val day = Dates.schoolDayOfWeek(date)
     val filled = lessons
         .filter { it.dayOfWeek == day }

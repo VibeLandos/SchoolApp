@@ -31,6 +31,8 @@ class ThemeSettings(context: Context) {
 
     private val _weekBells = MutableStateFlow(loadWeekBells())
     val weekBells: StateFlow<WeekBells> = _weekBells.asStateFlow()
+    private val _schoolDays = MutableStateFlow(loadSchoolDays())
+    val schoolDays: StateFlow<Int> = _schoolDays.asStateFlow()
 
     fun setMode(mode: ThemeMode) {
         prefs.edit().putString(KEY_MODE, mode.prefValue).apply()
@@ -51,6 +53,15 @@ class ThemeSettings(context: Context) {
         _weekBells.value = value
     }
 
+    fun setSchoolDays(days: Int) {
+        val value = days.coerceIn(5, 6)
+        prefs.edit().putInt(KEY_SCHOOL_DAYS, value).apply()
+        _schoolDays.value = value
+    }
+
+    private fun loadSchoolDays(): Int =
+        prefs.getInt(KEY_SCHOOL_DAYS, 6).coerceIn(5, 6)
+
     private fun loadWeekBells(): WeekBells {
         val raw = prefs.getString(KEY_BELLS, null)
         return WeekBells(
@@ -67,6 +78,7 @@ class ThemeSettings(context: Context) {
         private const val KEY_BELLS = "bells"
         private const val KEY_BELLS_DAYS = "bells_days"
         private const val KEY_BELLS_SETUP = "bells_setup"
+        private const val KEY_SCHOOL_DAYS = "school_days"
 
         fun wrapContext(base: Context): Context {
             val prefs = base.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

@@ -60,7 +60,6 @@ import java.util.Locale
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-private const val PagerCount = 6
 private val NumberColumnWidth = 40.dp
 private val SubjectColumnWidth = 130.dp
 private val SubjectTapZoneWidth = NumberColumnWidth + SubjectColumnWidth
@@ -88,6 +87,7 @@ fun DiaryScreen(
     homework: List<Homework>,
     photos: List<HomeworkPhoto>,
     weekBells: WeekBells,
+    schoolDays: Int,
     onSelectDate: (LocalDate) -> Unit,
     onShiftWeek: (Long) -> Unit,
     onSubjectClick: (date: LocalDate, period: Int, lesson: Lesson?) -> Unit,
@@ -99,14 +99,17 @@ fun DiaryScreen(
     val homeworkByDay = remember(homework) { homework.groupBy { it.epochDay } }
     val lessonsByDay = remember(lessons) { lessons.groupBy { it.dayOfWeek } }
 
-    val startPage = Dates.dayIndex(selectedDate)
-    val pagerState = rememberPagerState(initialPage = startPage, pageCount = { PagerCount })
+    val startPage = Dates.dayIndex(selectedDate, schoolDays)
+    val pagerState = rememberPagerState(
+        initialPage = startPage,
+        pageCount = { weekDates.size.coerceAtLeast(1) },
+    )
     val pagerScope = rememberCoroutineScope()
     val weekDatesState = rememberUpdatedState(weekDates)
     val onSelectDateState = rememberUpdatedState(onSelectDate)
 
     LaunchedEffect(selectedDate) {
-        val target = Dates.dayIndex(selectedDate)
+        val target = Dates.dayIndex(selectedDate, schoolDays)
         if (pagerState.currentPage != target && !pagerState.isScrollInProgress) {
             pagerState.scrollToPage(target)
         }
@@ -126,7 +129,7 @@ fun DiaryScreen(
             weekDates = weekDates,
             onSelectDate = { date ->
                 onSelectDate(date)
-                val target = Dates.dayIndex(date)
+                val target = Dates.dayIndex(date, schoolDays)
                 pagerScope.launch { pagerState.animateScrollToPage(target) }
             },
             onShiftWeek = onShiftWeek,

@@ -11,6 +11,9 @@
     <string name="menu_appearance">Оформление</string>
     <string name="menu_language">Язык</string>
     <string name="menu_schedule">Расписание</string>
+    <string name="menu_week">Учебная неделя</string>
+    <string name="week_five_days">5 дней · пн–пт</string>
+    <string name="week_six_days">6 дней · пн–сб</string>
     <string name="menu_bells">Звонки</string>
     <string name="bells_title">Расписание звонков</string>
     <string name="bells_quick_title">Быстрая настройка</string>
@@ -39,7 +42,7 @@
     <string name="bells_selected_day">%1$s · %2$s</string>
     <string name="bells_quick_again">Быстрая настройка на неделю</string>
     <string name="bells_quick_this_day">Настроить этот день заново</string>
-    <string name="now_sunday">Сегодня воскресенье — уроков нет.</string>
+    <string name="now_sunday">Сегодня выходной — уроков нет.</string>
     <string name="now_no_lessons">На сегодня уроки ещё не вписаны.</string>
     <string name="now_until_start">до начала</string>
     <string name="now_in_lesson">Урок %1$d · %2$s</string>

@@ -25,6 +25,8 @@ fun AppDrawer(
     onMode: (ThemeMode) -> Unit,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
+    schoolDays: Int,
+    onSchoolDays: (Int) -> Unit,
     onOpenBells: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
@@ -71,6 +73,27 @@ fun AppDrawer(
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
             }
+            Text(
+                text = stringResource(R.string.menu_week),
+                color = palette.gold,
+                fontFamily = FontFamily.Serif,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 20.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.week_five_days)) },
+                selected = schoolDays == 5,
+                onClick = { onSchoolDays(5) },
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.week_six_days)) },
+                selected = schoolDays == 6,
+                onClick = { onSchoolDays(6) },
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
             Text(
                 text = stringResource(R.string.menu_schedule),
                 color = palette.gold,

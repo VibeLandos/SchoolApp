@@ -26,27 +26,31 @@ data class DiaryUiState(
     val homework: List<Homework> = emptyList(),
     val photos: List<HomeworkPhoto> = emptyList(),
     val weekBells: WeekBells = WeekBells(),
+    val schoolDays: Int = 6,
 )
 
 class SchoolViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = (application as SchoolApplication).repository
     private val settings = (application as SchoolApplication).themeSettings
-    private val selectedDate = MutableStateFlow(Dates.todaySchoolDate())
+    private val selectedDate = MutableStateFlow(Dates.todaySchoolDate(settings.schoolDays.value))
 
     val uiState: StateFlow<DiaryUiState> = combine(
         selectedDate,
         repository.lessons,
         repository.homework,
         repository.photos,
-        settings.weekBells,
-    ) { date, lessons, homework, photos, weekBells ->
+        combine(settings.weekBells, settings.schoolDays) { bells, days -> bells to days },
+    ) { date, lessons, homework, photos, bellsAndDays ->
+        val (weekBells, schoolDays) = bellsAndDays
+        val clamped = Dates.clampToSchoolWeek(date, schoolDays)
         DiaryUiState(
-            selectedDate = date,
-            weekDates = Dates.weekDates(date),
+            selectedDate = clamped,
+            weekDates = Dates.weekDates(clamped, schoolDays),
             lessons = lessons,
             homework = homework,
             photos = photos,
             weekBells = weekBells,
+            schoolDays = schoolDays,
         )
     }.stateIn(
         viewModelScope,
@@ -57,11 +61,12 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
     fun photoFile(fileName: String): File = repository.photoFile(fileName)
 
     fun goToToday() {
-        selectedDate.value = Dates.todaySchoolDate()
+        selectedDate.value = Dates.todaySchoolDate(settings.schoolDays.value)
     }
 
     fun selectDate(date: LocalDate) {
-        if (selectedDate.value != date) selectedDate.value = date
+        val next = Dates.clampToSchoolWeek(date, settings.schoolDays.value)
+        if (selectedDate.value != next) selectedDate.value = next
     }
 
     fun shiftWeek(weeks: Long) {
@@ -94,5 +99,11 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setWeekBells(value: WeekBells) {
         settings.setWeekBells(value)
+    }
+
+    fun setSchoolDays(days: Int) {
+        val value = days.coerceIn(5, 6)
+        settings.setSchoolDays(value)
+        selectedDate.value = Dates.clampToSchoolWeek(selectedDate.value, value)
     }
 }

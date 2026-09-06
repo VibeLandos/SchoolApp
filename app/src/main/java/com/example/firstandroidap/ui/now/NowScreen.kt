@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 fun NowScreen(
     lessons: List<Lesson>,
     weekBells: WeekBells,
+    schoolDays: Int,
     onOpenMenu: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
@@ -62,8 +63,8 @@ fun NowScreen(
         }
     }
     val bells = weekBells.forDay(today.dayOfWeek.value)
-    val status = remember(today, time, lessons, bells) {
-        nowStatus(today, time, lessons, bells)
+    val status = remember(today, time, lessons, bells, schoolDays) {
+        nowStatus(today, time, lessons, bells, schoolDays)
     }
     val locale = Locale.getDefault()
 
