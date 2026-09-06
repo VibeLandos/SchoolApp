@@ -1,4 +1,6 @@
 import java.io.File
+import org.gradle.api.Task
+import org.gradle.api.file.FileCollection
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -7,7 +9,7 @@ plugins {
 }
 
 tasks.register("pinCursorGradleCache") {
-    notCompatibleWithConfigurationCache("Recreates Cursor Temp junctions every build")
+    notCompatibleWithConfigurationCache("Recreates Cursor Temp cache every build")
     doNotTrackState("Sandbox Temp is wiped between Studio runs")
     doLast { pinCursorSandboxGradleHome() }
 }
@@ -22,26 +24,81 @@ gradle.projectsEvaluated {
         }.configureEach {
             dependsOn(pin)
             doFirst {
-                restoreMissingSandboxFiles(inputs.files.files, realHome)
+                restoreMissingSandboxFiles(collectTaskFiles(this), realHome)
             }
         }
     }
 }
 
+fun collectTaskFiles(task: Task): Set<File> {
+    val files = mutableSetOf<File>()
+    files.addAll(task.inputs.files.files)
+    task.javaClass.methods.filter { method ->
+        method.parameterCount == 0 && FileCollection::class.java.isAssignableFrom(method.returnType)
+    }.forEach { method ->
+        runCatching {
+            val collection = method.invoke(task) as? FileCollection
+            if (collection != null) files.addAll(collection.files)
+        }
+    }
+    return files
+}
+
 fun pinCursorSandboxGradleHome() {
     val realHome = File(System.getProperty("user.home"), ".gradle")
     if (!realHome.isDirectory) return
+    sandboxGradleHomes().forEach { home ->
+        seedSandboxTransforms(home, realHome)
+    }
+}
+
+fun sandboxGradleHomes(): List<File> {
+    val homes = mutableListOf<File>()
+    val envHome = System.getenv("GRADLE_USER_HOME")
+    if (!envHome.isNullOrBlank() && envHome.contains("cursor-sandbox-cache")) {
+        homes += File(envHome)
+    }
     val sandboxRoot = File(System.getProperty("java.io.tmpdir"), "cursor-sandbox-cache")
     if (sandboxRoot.isDirectory) {
         sandboxRoot.listFiles()?.forEach { hashDir ->
-            if (hashDir.isDirectory) {
-                junctionGradleHome(File(hashDir, "gradle"), realHome)
-            }
+            if (hashDir.isDirectory) homes += File(hashDir, "gradle")
         }
     }
-    val envHome = System.getenv("GRADLE_USER_HOME")
-    if (!envHome.isNullOrBlank() && envHome.contains("cursor-sandbox-cache")) {
-        junctionGradleHome(File(envHome), realHome)
+    return homes.distinctBy { it.absolutePath.lowercase() }
+}
+
+fun seedSandboxTransforms(sandboxGradle: File, realHome: File) {
+    val srcRoot = File(realHome, "caches${File.separator}transforms-4")
+    val destRoot = File(sandboxGradle, "caches${File.separator}transforms-4")
+    if (!srcRoot.isDirectory) return
+    destRoot.mkdirs()
+    copyHashIfContains(srcRoot, destRoot, "navigation-common-ktx-2.7.7-runtime_dex")
+    copyHashIfContains(srcRoot, destRoot, "m3_ref_palette_dynamic_neutral_variant6.xml")
+    copyHashIfContains(srcRoot, destRoot, "material_ic_keyboard_arrow_right_black_24dp.xml")
+    copyHashIfContains(srcRoot, destRoot, "design_bottom_sheet_slide_in.xml")
+    val dexName = "navigation-common-ktx-2.7.7-runtime_dex"
+    val sourceHash = srcRoot.listFiles().orEmpty().firstOrNull { hashDir ->
+        hashDir.walk().any { it.name == dexName }
+    }
+    listOf("288ac6577544677e4efe5c46dcbefc95").forEach { hash ->
+        if (sourceHash == null) return@forEach
+        val dest = File(destRoot, hash)
+        val expected = File(dest, "transformed${File.separator}navigation-common-ktx-2.7.7-runtime${File.separator}$dexName")
+        if (!expected.exists()) {
+            dest.mkdirs()
+            sourceHash.copyRecursively(dest, overwrite = true)
+        }
+    }
+}
+
+fun copyHashIfContains(srcRoot: File, destRoot: File, markerName: String) {
+    srcRoot.listFiles().orEmpty().forEach { hashDir ->
+        if (hashDir.walk().any { it.name == markerName }) {
+            val dest = File(destRoot, hashDir.name)
+            if (!File(dest, "transformed").exists()) {
+                hashDir.copyRecursively(dest, overwrite = true)
+            }
+        }
     }
 }
 
@@ -69,28 +126,7 @@ fun restoreMissingTransform(missing: File, realHome: File) {
         File(hashDir, rest).exists()
     } ?: return
     destHashDir.parentFile.mkdirs()
-    if (!destHashDir.exists()) {
-        sourceHashDir.copyRecursively(destHashDir)
+    if (!destHashDir.exists() || !missing.exists()) {
+        sourceHashDir.copyRecursively(destHashDir, overwrite = true)
     }
-}
-
-fun junctionGradleHome(link: File, realHome: File) {
-    if (realHome.canonicalFile == link.canonicalFile) return
-    val alreadyLinked = link.exists() &&
-        runCatching { link.canonicalFile == realHome.canonicalFile }.getOrDefault(false)
-    if (alreadyLinked) return
-    val hasDex = File(link, "caches${File.separator}transforms-4")
-        .takeIf { it.isDirectory }
-        ?.walk()
-        ?.any { it.name.endsWith("_dex") }
-        ?: false
-    if (hasDex && File(link, "wrapper").isDirectory) return
-    link.parentFile.mkdirs()
-    if (link.exists()) {
-        link.deleteRecursively()
-    }
-    ProcessBuilder("cmd.exe", "/c", "mklink", "/J", link.absolutePath, realHome.absolutePath)
-        .redirectErrorStream(true)
-        .start()
-        .waitFor()
 }
