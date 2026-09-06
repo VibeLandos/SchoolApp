@@ -52,10 +52,11 @@ fun NowScreen(
     onOpenMenu: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
-    val today = remember { LocalDate.now() }
+    var today by remember { mutableStateOf(LocalDate.now()) }
     var time by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
         while (true) {
+            today = LocalDate.now()
             time = LocalTime.now()
             delay(1_000)
         }
