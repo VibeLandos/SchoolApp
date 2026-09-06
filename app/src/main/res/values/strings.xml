@@ -15,6 +15,14 @@
     <string name="week_five_days">5 дней · пн–пт</string>
     <string name="week_six_days">6 дней · пн–сб</string>
     <string name="menu_bells">Звонки</string>
+    <string name="menu_share_day">Отправить день</string>
+    <string name="menu_share_week">Отправить неделю</string>
+    <string name="menu_import_schedule">Вставить расписание</string>
+    <string name="import_schedule_title">Вставить расписание</string>
+    <string name="import_schedule_body">Вставь текст дня или недели. Домашка не меняется. Применится к открытому дню или ко всей неделе.</string>
+    <string name="import_schedule_hint">Текст из сообщения</string>
+    <string name="import_schedule_apply">Применить</string>
+    <string name="import_schedule_error">Не получилось прочитать текст. Нужно то, что отправил дневник.</string>
     <string name="bells_title">Расписание звонков</string>
     <string name="bells_quick_title">Быстрая настройка</string>
     <string name="bells_quick_body">Соберём звонки на всю неделю: сколько идут уроки и перемены. Потом можно отдельно поменять субботу.</string>

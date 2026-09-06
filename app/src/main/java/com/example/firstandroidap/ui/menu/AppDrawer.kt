@@ -28,6 +28,9 @@ fun AppDrawer(
     schoolDays: Int,
     onSchoolDays: (Int) -> Unit,
     onOpenBells: () -> Unit,
+    onShareDay: () -> Unit,
+    onShareWeek: () -> Unit,
+    onImportSchedule: () -> Unit,
 ) {
     val palette = LocalDiaryPalette.current
     ModalDrawerSheet(
@@ -105,6 +108,27 @@ fun AppDrawer(
                 label = { Text(stringResource(R.string.menu_bells)) },
                 selected = false,
                 onClick = onOpenBells,
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.menu_share_day)) },
+                selected = false,
+                onClick = onShareDay,
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.menu_share_week)) },
+                selected = false,
+                onClick = onShareWeek,
+                colors = itemColors,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.menu_import_schedule)) },
+                selected = false,
+                onClick = onImportSchedule,
                 colors = itemColors,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )

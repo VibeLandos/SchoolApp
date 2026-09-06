@@ -15,6 +15,14 @@
     <string name="week_five_days">5 days · Mon–Fri</string>
     <string name="week_six_days">6 days · Mon–Sat</string>
     <string name="menu_bells">Bells</string>
+    <string name="menu_share_day">Send this day</string>
+    <string name="menu_share_week">Send this week</string>
+    <string name="menu_import_schedule">Paste schedule</string>
+    <string name="import_schedule_title">Paste schedule</string>
+    <string name="import_schedule_body">Paste a day or week as text. Homework is left alone. A day applies to the open page; a week replaces the whole timetable.</string>
+    <string name="import_schedule_hint">Text from a message</string>
+    <string name="import_schedule_apply">Apply</string>
+    <string name="import_schedule_error">Couldn’t read that text. It needs to be what Diary sent.</string>
     <string name="bells_title">Bell schedule</string>
     <string name="bells_quick_title">Quick setup</string>
     <string name="bells_quick_body">We’ll build bells for the whole week: lesson length and breaks. You can change Saturday afterwards.</string>

@@ -48,7 +48,7 @@ data class BellSchedule(val periods: List<BellPeriod>) {
         }
         periods.getOrNull(period - 1)?.let { return it }
         if (period < 1) return BellRecipe.standard().build().of(1)
-        var cursor = parseHm(periods.lastOrNull()?.end) ?: LocalTime.of(15, 20)
+        var cursor = parseHm(periods.lastOrNull()?.end ?: "") ?: LocalTime.of(15, 20)
         var generated = periods.size
         var slot = periods.lastOrNull() ?: BellRecipe.standard().build().of(1)
         while (generated < period) {

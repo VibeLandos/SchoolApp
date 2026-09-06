@@ -24,6 +24,12 @@ interface LessonDao {
 
     @Delete
     suspend fun delete(lesson: Lesson)
+
+    @Query("DELETE FROM lessons WHERE dayOfWeek = :day")
+    suspend fun deleteForDay(day: Int)
+
+    @Query("DELETE FROM lessons")
+    suspend fun deleteAll()
 }
 
 @Dao

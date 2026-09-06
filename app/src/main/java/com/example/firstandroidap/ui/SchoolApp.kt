@@ -1,5 +1,6 @@
 package com.example.firstandroidap.ui
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.firstandroidap.R
@@ -40,6 +42,7 @@ import com.example.firstandroidap.data.Lesson
 import com.example.firstandroidap.data.SchoolCatalog
 import com.example.firstandroidap.ui.components.EditHomeworkSheet
 import com.example.firstandroidap.ui.components.EditLessonSheet
+import com.example.firstandroidap.ui.components.ImportScheduleSheet
 import com.example.firstandroidap.ui.diary.DiaryScreen
 import com.example.firstandroidap.ui.homework.HomeworkListScreen
 import com.example.firstandroidap.ui.menu.AppDrawer
@@ -71,6 +74,7 @@ private sealed interface Editor {
     ) : Editor
 
     data object Bells : Editor
+    data object Import : Editor
 }
 
 @Composable
@@ -83,6 +87,9 @@ fun SchoolApp(
 ) {
     val ui by viewModel.uiState.collectAsState()
     val palette = LocalDiaryPalette.current
+    val context = LocalContext.current
+    val shareDayTitle = stringResource(R.string.menu_share_day)
+    val shareWeekTitle = stringResource(R.string.menu_share_week)
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route
@@ -119,6 +126,26 @@ fun SchoolApp(
                 onOpenBells = {
                     closeMenu()
                     editor = Editor.Bells
+                },
+                onShareDay = {
+                    closeMenu()
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, viewModel.shareDayText())
+                    }
+                    context.startActivity(Intent.createChooser(send, shareDayTitle))
+                },
+                onShareWeek = {
+                    closeMenu()
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, viewModel.shareWeekText())
+                    }
+                    context.startActivity(Intent.createChooser(send, shareWeekTitle))
+                },
+                onImportSchedule = {
+                    closeMenu()
+                    editor = Editor.Import
                 },
             )
         },
@@ -299,6 +326,10 @@ fun SchoolApp(
             schoolDays = ui.schoolDays,
             onChange = viewModel::setWeekBells,
             onDismiss = { editor = null },
+        )
+        Editor.Import -> ImportScheduleSheet(
+            onDismiss = { editor = null },
+            onImport = viewModel::importScheduleText,
         )
         null -> Unit
     }

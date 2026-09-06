@@ -33,6 +33,16 @@ class SchoolRepository(
         if (lesson.id != 0L) lessonDao.delete(lesson)
     }
 
+    suspend fun replaceDayLessons(dayOfWeek: Int, lessons: List<Lesson>) {
+        lessonDao.deleteForDay(dayOfWeek)
+        lessons.forEach { lessonDao.upsert(it.copy(id = 0, dayOfWeek = dayOfWeek)) }
+    }
+
+    suspend fun replaceWeekLessons(lessons: List<Lesson>) {
+        lessonDao.deleteAll()
+        lessons.forEach { lessonDao.upsert(it.copy(id = 0)) }
+    }
+
     suspend fun saveHomework(
         homework: Homework,
         keepFileNames: List<String> = emptyList(),
