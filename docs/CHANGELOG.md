@@ -4,6 +4,7 @@
 
 ## 2026-09-06
 
+- Сборка: Gradle user home задан в wrapper и в `.idea/gradle.xml`, чтобы Studio из Cursor не ходила в стёртый Temp/cursor-sandbox (mergeExtDex / цвета Material3).
 - Сборка смотрит кэш Gradle в `C:/Users/Rinat/.gradle`, не в Temp/cursor-sandbox; Kotlin компилируется in-process — иначе assembleDebug падает на mergeExtDex и «Material3 color not found».
 - Меню: отправить день или неделю текстом (выбор приложения) и вставить тот же текст. Домашка не участвует.
 - Переключатель учебной недели в меню: 5 дней (пн–пт) или 6 (пн–сб).

@@ -48,7 +48,7 @@ Android-приложение **Дневник**: расписание по дн�
 
 - Gradle: корневой `build.gradle.kts`, `app/build.gradle.kts`, версии в `gradle/libs.versions.toml`
 - JDK для Gradle: `org.gradle.java.home` в `gradle.properties` → `jbr-21.0.11` (не системная Java 25 и не сломанный `jbr` новой Studio)
-- Кэш Gradle: `systemProp.gradle.user.home` → `C:/Users/Rinat/.gradle` (не Temp/cursor-sandbox: иначе mergeExtDex и aapt ломаются). Kotlin компилируется in-process, чтобы демон не падал при двух сборках сразу.
+- Кэш Gradle всегда `%USERPROFILE%/.gradle`: wrapper и `.idea/gradle.xml` (`serviceDirectoryPath`) перебивают `GRADLE_USER_HOME` из Cursor sandbox. Иначе mergeExtDex и aapt ссылаются на стёртый Temp. Kotlin — in-process.
 - Compose + Material3, Navigation, Room (KSP), desugar для `java.time`; Compose Compiler strong skipping
 - Release: R8 minify + debug-подпись, чтобы ставить на телефон без keystore
 - Имя приложения: `app/src/main/res/values/strings.xml` → «Дневник» / `values-en` → «Diary»
