@@ -9,7 +9,7 @@ Android-приложение **Дневник**: расписание по дн�
 | `app/src/main/AndroidManifest.xml` | Application + launcher Activity |
 | `app/src/main/java/com/example/firstandroidap/SchoolApplication.kt` | Room + `SchoolRepository` + `ThemeSettings` |
 | `app/src/main/java/com/example/firstandroidap/MainActivity.kt` | Compose, `DiaryTheme(mode)`, `SchoolApp` |
-| `app/src/main/java/com/example/firstandroidap/ui/SchoolApp.kt` | Навигация, нижнее меню, drawer оформления (без жеста с края), шиты |
+| `app/src/main/java/com/example/firstandroidap/ui/SchoolApp.kt` | Навигация, нижнее меню, drawer оформления (свайп/назад закрывают, с края не открывают), шиты |
 | `app/src/main/java/com/example/firstandroidap/ui/SchoolViewModel.kt` | Состояние дня/недели, запись в репозиторий |
 
 ## Данные (`.../data/`)

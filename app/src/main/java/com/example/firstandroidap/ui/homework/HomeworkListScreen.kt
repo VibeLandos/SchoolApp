@@ -13,7 +13,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -88,20 +90,29 @@ fun HomeworkListScreen(
             Modifier.padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            val chipColors = FilterChipDefaults.filterChipColors(
+                containerColor = palette.cover,
+                labelColor = palette.gold,
+                selectedContainerColor = palette.gold,
+                selectedLabelColor = palette.onGold,
+            )
             FilterChip(
                 selected = filter == TaskFilter.OPEN,
                 onClick = { filter = TaskFilter.OPEN },
                 label = { Text("Не сделано") },
+                colors = chipColors,
             )
             FilterChip(
                 selected = filter == TaskFilter.DONE,
                 onClick = { filter = TaskFilter.DONE },
                 label = { Text("Сделано") },
+                colors = chipColors,
             )
             FilterChip(
                 selected = filter == TaskFilter.ALL,
                 onClick = { filter = TaskFilter.ALL },
                 label = { Text("Все") },
+                colors = chipColors,
             )
         }
 
@@ -131,6 +142,11 @@ fun HomeworkListScreen(
                         Checkbox(
                             checked = item.isDone,
                             onCheckedChange = { onToggle(item) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = palette.gold,
+                                uncheckedColor = palette.gold.copy(alpha = 0.7f),
+                                checkmarkColor = palette.onGold,
+                            ),
                         )
                         Column(Modifier.weight(1f)) {
                             Text(

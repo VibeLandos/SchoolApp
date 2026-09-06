@@ -4,7 +4,6 @@ import android.app.Activity
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -16,6 +15,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -63,10 +64,11 @@ val CoverPalette = DiaryPalette(
     darkChrome = true,
 )
 
+/** Ночь: та же тетрадь, темнее кожа обложки, бумага чуть приглушена — не инверсия. */
 val NightPalette = DiaryPalette(
     cover = NightCover,
     coverDeep = NightCoverDeep,
-    gold = CoverGold,
+    gold = NightGold,
     onGold = NightCoverDeep,
     paper = NightPaper,
     paperLine = NightPaperLine,
@@ -79,47 +81,55 @@ val NightPalette = DiaryPalette(
 
 val LocalDiaryPalette = staticCompositionLocalOf { CoverPalette }
 
-private val LightColors = lightColorScheme(
-    primary = CoverBurgundy,
-    onPrimary = CoverGold,
-    secondary = HomeworkInk,
-    onSecondary = Color.White,
-    background = Paper,
-    onBackground = Ink,
-    surface = Paper,
-    onSurface = Ink,
-    surfaceVariant = Color(0xFFE9E0C8),
-    onSurfaceVariant = Ink,
-    outline = PaperLine,
-)
+private fun foilOn(cover: Color): Color =
+    if (cover.luminance() > 0.45f) CoverDeep else CoverGold
 
-private val NightColors = darkColorScheme(
-    primary = CoverGold,
-    onPrimary = NightCoverDeep,
-    secondary = NightHomework,
-    onSecondary = NightCoverDeep,
-    background = NightCoverDeep,
-    onBackground = NightInk,
-    surface = NightPaper,
-    onSurface = NightInk,
-    surfaceVariant = Color(0xFF3A3328),
-    onSurfaceVariant = NightFaintInk,
-    outline = NightPaperLine,
-)
+private fun stainLeather(base: DiaryPalette, stain: Color, amount: Float = 0.28f): DiaryPalette {
+    val cover = lerp(base.cover, stain, amount)
+    val deep = lerp(base.coverDeep, stain, amount * 0.85f)
+    val gold = foilOn(cover)
+    return base.copy(
+        cover = cover,
+        coverDeep = deep,
+        gold = gold,
+        onGold = if (gold.luminance() > 0.5f) deep else CoverGold,
+        darkChrome = cover.luminance() < 0.45f,
+    )
+}
 
-private fun paletteFromScheme(scheme: ColorScheme, dark: Boolean) = DiaryPalette(
-    cover = scheme.primary,
-    coverDeep = scheme.primaryContainer,
-    gold = scheme.onPrimary,
-    onGold = scheme.primary,
-    paper = scheme.surface,
-    paperLine = scheme.outline,
-    ink = scheme.onSurface,
-    faintInk = scheme.onSurfaceVariant,
-    marginRed = scheme.error,
-    homeworkInk = scheme.secondary,
-    darkChrome = dark,
-)
+private fun materialFor(palette: DiaryPalette) = if (palette.paper.luminance() < 0.4f) {
+    darkColorScheme(
+        primary = palette.cover,
+        onPrimary = palette.gold,
+        secondary = palette.homeworkInk,
+        onSecondary = palette.paper,
+        background = palette.cover,
+        onBackground = palette.gold,
+        surface = palette.paper,
+        onSurface = palette.ink,
+        surfaceVariant = palette.paper,
+        onSurfaceVariant = palette.faintInk,
+        outline = palette.paperLine,
+        error = palette.marginRed,
+        onError = palette.paper,
+    )
+} else {
+    lightColorScheme(
+        primary = palette.cover,
+        onPrimary = palette.gold,
+        secondary = palette.homeworkInk,
+        onSecondary = Color.White,
+        background = palette.cover,
+        onBackground = palette.gold,
+        surface = palette.paper,
+        onSurface = palette.ink,
+        surfaceVariant = Color(0xFFE9E0C8),
+        onSurfaceVariant = palette.faintInk,
+        outline = palette.paperLine,
+        error = palette.marginRed,
+        onError = Color.White,
+    )
+}
 
 @Composable
 fun DiaryTheme(
@@ -128,23 +138,21 @@ fun DiaryTheme(
 ) {
     val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
-    val (scheme, palette) = when (mode) {
-        ThemeMode.Cover -> LightColors to CoverPalette
-        ThemeMode.Dark -> NightColors to NightPalette
+    val palette = when (mode) {
+        ThemeMode.Cover -> CoverPalette
+        ThemeMode.Dark -> NightPalette
         ThemeMode.System -> {
-            val dynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-            val colors = when {
-                dynamic && systemDark -> dynamicDarkColorScheme(context)
-                dynamic -> dynamicLightColorScheme(context)
-                systemDark -> NightColors
-                else -> LightColors
+            val notebook = if (systemDark) NightPalette else CoverPalette
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val dynamic = if (systemDark) {
+                    dynamicDarkColorScheme(context)
+                } else {
+                    dynamicLightColorScheme(context)
+                }
+                stainLeather(notebook, dynamic.primary)
+            } else {
+                notebook
             }
-            val page = when {
-                dynamic -> paletteFromScheme(colors, systemDark)
-                systemDark -> NightPalette
-                else -> CoverPalette
-            }
-            colors to page
         }
     }
 
@@ -161,7 +169,7 @@ fun DiaryTheme(
 
     CompositionLocalProvider(LocalDiaryPalette provides palette) {
         MaterialTheme(
-            colorScheme = scheme,
+            colorScheme = materialFor(palette),
             typography = Typography,
             content = content,
         )

@@ -1,5 +1,6 @@
 package com.example.firstandroidap.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -81,16 +82,20 @@ fun SchoolApp(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val menuScope = rememberCoroutineScope()
     val openMenu: () -> Unit = { menuScope.launch { drawerState.open() } }
+    val closeMenu: () -> Unit = { menuScope.launch { drawerState.close() } }
+    val drawerShowing = drawerState.isOpen || drawerState.targetValue == DrawerValue.Open
+
+    BackHandler(enabled = drawerShowing) { closeMenu() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        gesturesEnabled = false,
+        gesturesEnabled = drawerShowing,
         drawerContent = {
             AppDrawer(
                 mode = themeMode,
                 onMode = { mode ->
                     onThemeMode(mode)
-                    menuScope.launch { drawerState.close() }
+                    closeMenu()
                 },
             )
         },
