@@ -33,8 +33,8 @@ jobs:
         run: |
           mkdir -p signing
           if [ -z "$SIGNING_KEYSTORE_BASE64" ]; then
-            echo "No keystore secret; Gradle will sign with the debug key."
-            exit 0
+            echo "SIGNING_KEYSTORE_BASE64 is required so every APK uses the same key."
+            exit 1
           fi
           echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > signing/diary-release.jks
           cat > signing/keystore.properties <<EOF

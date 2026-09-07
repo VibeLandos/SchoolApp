@@ -26,5 +26,7 @@ gradle.properties.local
 /signing/*.jks
 /signing/*.keystore
 /signing/keystore.properties
+/signing/*.b64
+/signing/*.tmp
 
 .DS_Store
