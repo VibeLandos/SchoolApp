@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -65,6 +66,7 @@ import com.arzabc.school.data.Dates
 import com.arzabc.school.data.Homework
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.SchoolCatalog
+import com.arzabc.school.ui.components.AppUpdateDialog
 import com.arzabc.school.ui.components.EditHomeworkSheet
 import com.arzabc.school.ui.components.EditLessonSheet
 import com.arzabc.school.ui.components.ImportScheduleSheet
@@ -81,8 +83,12 @@ import com.arzabc.school.ui.theme.LocalGlassTokens
 import com.arzabc.school.ui.theme.ThemeBrightness
 import com.arzabc.school.ui.theme.UiStyle
 import com.arzabc.school.ui.theme.glassSurface
+import com.arzabc.school.update.GitHubUpdate
+import com.arzabc.school.update.RemoteRelease
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private object Routes {
     const val Diary = "diary"
@@ -106,6 +112,7 @@ private sealed interface Editor {
 
     data object Bells : Editor
     data object Import : Editor
+    data object Update : Editor
 }
 
 @Composable
@@ -127,6 +134,7 @@ fun SchoolApp(
     val backStack by navController.currentBackStackEntryAsState()
     val route = backStack?.destination?.route
     var editor by remember { mutableStateOf<Editor?>(null) }
+    var launchUpdate by remember { mutableStateOf<RemoteRelease?>(null) }
     var lastDiaryTapAt by remember { mutableLongStateOf(0L) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val menuScope = rememberCoroutineScope()
@@ -134,6 +142,15 @@ fun SchoolApp(
     val closeMenu: () -> Unit = { menuScope.launch { drawerState.close() } }
     val drawerShowing = drawerState.isOpen || drawerState.targetValue == DrawerValue.Open
     val openTasks = remember(ui.homework) { ui.homework.count { !it.isDone } }
+
+    LaunchedEffect(Unit) {
+        val remote = withContext(Dispatchers.IO) {
+            runCatching { GitHubUpdate.fetchLatest() }.getOrNull()
+        }
+        if (remote != null && GitHubUpdate.isNewer(remote)) {
+            launchUpdate = remote
+        }
+    }
 
     fun go(target: String) {
         navController.navigate(target) {
@@ -197,6 +214,10 @@ fun SchoolApp(
                     onImportSchedule = {
                         closeMenu()
                         editor = Editor.Import
+                    },
+                    onCheckUpdate = {
+                        closeMenu()
+                        editor = Editor.Update
                     },
                 )
             },
@@ -376,7 +397,16 @@ fun SchoolApp(
                 onDismiss = { editor = null },
                 onImport = viewModel::importScheduleText,
             )
+            Editor.Update -> AppUpdateDialog(onDismiss = { editor = null })
             null -> Unit
+        }
+        launchUpdate?.let { release ->
+            if (editor !is Editor.Update) {
+                AppUpdateDialog(
+                    knownRelease = release,
+                    onDismiss = { launchUpdate = null },
+                )
+            }
         }
     }
 }

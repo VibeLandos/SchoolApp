@@ -23,6 +23,11 @@ android {
         }
     }
 
+    // One APK for every phone. No ABI splits; there is no native .so to slice.
+    splits {
+        abi { isEnable = false }
+    }
+
     signingConfigs {
         getByName("debug") {
             // minSdk 24 otherwise drops v1; some file managers / Play Protect then treat the APK as unsigned.
@@ -72,6 +77,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()

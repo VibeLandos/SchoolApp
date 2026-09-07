@@ -1,20 +1,30 @@
-*.iml
-.gradle
-/local.properties
-/app/build
-hs_err_pid*.log
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+# Build
+.gradle/
 /build
+/app/build
 /captures
 .externalNativeBuild
 .cxx
+hs_err_pid*.log
 local.properties
+
+# IDE / Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Agent notes, rules, screenshots — not needed to build the APK
+.cursor/
+docs/
+school1/
+AGENTS.md
+*.mdc
+gradle.properties.local
+
+# Signing secrets (example file stays in git)
 /signing/*.jks
 /signing/*.keystore
 /signing/keystore.properties
+
+.DS_Store

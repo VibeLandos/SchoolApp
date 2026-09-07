@@ -36,6 +36,7 @@ fun AppDrawer(
     onShareDay: () -> Unit,
     onShareWeek: () -> Unit,
     onImportSchedule: () -> Unit,
+    onCheckUpdate: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val glass = isGlassStyle()
@@ -119,6 +120,14 @@ fun AppDrawer(
                 label = { Text(stringResource(R.string.menu_import_schedule)) },
                 selected = false,
                 onClick = onImportSchedule,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+
+            DrawerLabel(stringResource(R.string.menu_app))
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.menu_update)) },
+                selected = false,
+                onClick = onCheckUpdate,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
         }
