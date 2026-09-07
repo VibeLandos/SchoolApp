@@ -27,6 +27,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -137,16 +139,23 @@ fun DiaryScreen(
             subtitle = Dates.weekRangeLabel(weekDates),
             onOpenMenu = onOpenMenu,
             actions = {
+                val iconTint = if (isGlassStyle()) {
+                    LocalGlassTokens.current.text
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
                 IconButton(onClick = { onShiftWeek(-1) }) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = stringResource(R.string.cd_prev_week),
+                        tint = iconTint,
                     )
                 }
                 IconButton(onClick = { onShiftWeek(1) }) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = stringResource(R.string.cd_next_week),
+                        tint = iconTint,
                     )
                 }
             },
@@ -203,13 +212,15 @@ private fun WeekChips(
             val selected = date == selectedDate
             val shape = RoundedCornerShape(if (glass) 14.dp else 12.dp)
             val bg = when {
-                selected && glass -> tokens.card.copy(alpha = 0.92f)
+                selected && glass && tokens.darkChrome -> Color.White.copy(alpha = 0.22f)
+                selected && glass -> Color.White.copy(alpha = 0.92f)
                 selected -> scheme.secondaryContainer
                 glass -> tokens.subtle
                 else -> scheme.surfaceContainerLow
             }
             val fg = when {
-                selected && glass -> tokens.text
+                selected && glass && tokens.darkChrome -> Color.White
+                selected && glass -> Color(0xFF111111)
                 selected -> scheme.onSecondaryContainer
                 glass -> tokens.textSecondary
                 else -> scheme.onSurfaceVariant
@@ -267,9 +278,10 @@ private fun DiaryPage(
 ) {
     val ordered = remember(lessons) { lessons.sortedBy { it.period } }
     val homeworkByPeriod = remember(homework) { homework.associateBy { it.period } }
+    val bottomGap = if (isGlassStyle()) 28.dp else 88.dp
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = bottomGap),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (ordered.isEmpty()) {
@@ -283,10 +295,19 @@ private fun DiaryPage(
                     Text(
                         text = stringResource(R.string.diary_empty_day),
                         style = MaterialTheme.typography.headlineMedium,
+                        color = if (isGlassStyle()) {
+                            LocalGlassTokens.current.text
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                     )
                     Text(
                         text = stringResource(R.string.diary_empty_body),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isGlassStyle()) {
+                            LocalGlassTokens.current.textSecondary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         modifier = Modifier.padding(top = 8.dp, start = 24.dp, end = 24.dp),
                     )
                     FilledTonalButton(
@@ -347,10 +368,11 @@ private fun LessonCard(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 PeriodBadge(lesson.period, highlighted = happening)
-                Column(Modifier.padding(start = 10.dp)) {
+                Column(Modifier.padding(start = 10.dp).weight(1f)) {
                     Text(
                         text = lesson.subject,
                         style = MaterialTheme.typography.titleMedium,
+                        color = if (glass) tokens.text else LocalContentColor.current,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -371,14 +393,7 @@ private fun LessonCard(
                     )
                 }
             }
-            if (homework == null) {
-                Text(
-                    text = stringResource(R.string.homework_none),
-                    color = if (glass) tokens.textSecondary else scheme.onSurfaceVariant,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-            } else {
+            if (homework != null) {
                 val panelShape = RoundedCornerShape(12.dp)
                 Row(
                     Modifier
@@ -396,7 +411,11 @@ private fun LessonCard(
                         checked = homework.isDone,
                         onCheckedChange = { onToggleHomework() },
                     )
-                    Column(Modifier.padding(top = 10.dp, end = 8.dp)) {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .padding(top = 10.dp, end = 8.dp),
+                    ) {
                         Text(
                             text = stringResource(R.string.homework_tag),
                             color = if (glass) tokens.accent else scheme.primary,
@@ -408,6 +427,7 @@ private fun LessonCard(
                             Text(
                                 text = homework.description,
                                 style = MaterialTheme.typography.bodyMedium,
+                                color = if (glass) tokens.text else LocalContentColor.current,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
                                 textDecoration = if (homework.isDone) {

@@ -30,24 +30,24 @@ data class GlassTokens(
 )
 
 val GlassLight = GlassTokens(
-    card = Color(0x73FFFFFF),
-    subtle = Color(0x47FFFFFF),
+    card = Color(0xC2FFFFFF),
+    subtle = Color(0x8AFFFFFF),
     border = Color(0xA6FFFFFF),
     text = Color(0xF012141A),
-    textSecondary = Color(0xAD3C404C),
+    textSecondary = Color(0xC23C404C),
     accent = Color(0xFF007AFF),
-    tabBar = Color(0x8CFFFFFF),
+    tabBar = Color(0xC8FFFFFF),
     darkChrome = false,
 )
 
 val GlassDark = GlassTokens(
-    card = Color(0x8C121622),
-    subtle = Color(0x14FFFFFF),
-    border = Color(0x38FFFFFF),
-    text = Color(0xFAFFFFFF),
-    textSecondary = Color(0xADEBEBF5),
-    accent = Color(0xFF2997FF),
-    tabBar = Color(0xAD121622),
+    card = Color(0xD4181C28),
+    subtle = Color(0x33FFFFFF),
+    border = Color(0x55FFFFFF),
+    text = Color(0xFFFFFFFF),
+    textSecondary = Color(0xD6EBEBF5),
+    accent = Color(0xFF64D2FF),
+    tabBar = Color(0xD4181C28),
     darkChrome = true,
 )
 

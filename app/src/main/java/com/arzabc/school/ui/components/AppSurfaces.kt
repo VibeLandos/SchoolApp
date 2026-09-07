@@ -20,9 +20,11 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -109,15 +111,23 @@ fun DiaryCard(
         glass -> tokens.border
         else -> Color.Transparent
     }
+    val contentColor = when {
+        glass -> tokens.text
+        highlighted -> scheme.onPrimaryContainer
+        else -> scheme.onSurface
+    }
     Box(
         modifier
+            .fillMaxWidth()
             .clip(shape)
             .background(bg, shape)
             .then(if (glass || highlighted) Modifier.border(1.dp, border, shape) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(14.dp),
     ) {
-        content()
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            content()
+        }
     }
 }
 

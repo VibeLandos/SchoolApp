@@ -234,7 +234,7 @@ fun SchoolApp(
                     startDestination = Routes.Diary,
                     modifier = Modifier
                         .padding(padding)
-                        .then(if (glass) Modifier.padding(bottom = 100.dp) else Modifier),
+                        .then(if (glass) Modifier.padding(bottom = 168.dp) else Modifier),
                 ) {
                     composable(Routes.Diary) {
                         DiaryScreen(
@@ -456,7 +456,12 @@ private fun GlassTab(
             .clip(shape)
             .then(
                 if (selected) {
-                    Modifier.background(tokens.card.copy(alpha = 0.95f), shape)
+                    val selectedBg = if (tokens.darkChrome) {
+                        Color.White.copy(alpha = 0.20f)
+                    } else {
+                        Color.White.copy(alpha = 0.92f)
+                    }
+                    Modifier.background(selectedBg, shape)
                 } else {
                     Modifier
                 },
@@ -465,9 +470,14 @@ private fun GlassTab(
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = tokens.text, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = null, tint = if (selected) tokens.text else tokens.textSecondary, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, color = tokens.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            label,
+            color = if (selected) tokens.text else tokens.textSecondary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
         if (badge > 0) {
             Box(
                 Modifier

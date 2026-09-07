@@ -1,12 +1,9 @@
 ﻿package com.arzabc.school.ui.menu
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
@@ -18,8 +15,10 @@ import androidx.compose.ui.unit.dp
 import com.arzabc.school.R
 import com.arzabc.school.data.AppLanguage
 import com.arzabc.school.ui.components.SeedSwatches
+import com.arzabc.school.ui.components.isGlassStyle
 import com.arzabc.school.ui.theme.Appearance
 import com.arzabc.school.ui.theme.ColorSeed
+import com.arzabc.school.ui.theme.LocalGlassTokens
 import com.arzabc.school.ui.theme.ThemeBrightness
 import com.arzabc.school.ui.theme.UiStyle
 
@@ -39,9 +38,11 @@ fun AppDrawer(
     onImportSchedule: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
     ModalDrawerSheet(
-        drawerContainerColor = scheme.surfaceContainerLow,
-        drawerContentColor = scheme.onSurface,
+        drawerContainerColor = if (glass) tokens.card else scheme.surfaceContainerLow,
+        drawerContentColor = if (glass) tokens.text else scheme.onSurface,
     ) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             DrawerLabel(stringResource(R.string.menu_appearance))
@@ -62,17 +63,13 @@ fun AppDrawer(
                 onClick = { onStyle(UiStyle.Glass) },
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
-            Row(
-                Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ThemeBrightness.entries.forEach { item ->
-                    FilterChip(
-                        selected = appearance.brightness == item,
-                        onClick = { onBrightness(item) },
-                        label = { Text(stringResource(item.titleRes)) },
-                    )
-                }
+            ThemeBrightness.entries.forEach { item ->
+                NavigationDrawerItem(
+                    label = { Text(stringResource(item.titleRes)) },
+                    selected = appearance.brightness == item,
+                    onClick = { onBrightness(item) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
             }
 
             DrawerLabel(stringResource(R.string.menu_language))
@@ -130,10 +127,16 @@ fun AppDrawer(
 
 @Composable
 private fun DrawerLabel(text: String) {
+    val glass = isGlassStyle()
+    val color = if (glass) {
+        LocalGlassTokens.current.accent
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
     Text(
         text = text,
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.primary,
+        color = color,
         modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
     )
 }

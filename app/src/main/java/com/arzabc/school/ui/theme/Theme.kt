@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -11,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -64,7 +66,7 @@ fun DiaryTheme(
     }
     val glass = appearance.style == UiStyle.Glass
     val glassTokens = if (dark) GlassDark else GlassLight
-    val scheme = if (!glass &&
+    val baseScheme = if (!glass &&
         appearance.seed == ColorSeed.Wallpaper &&
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     ) {
@@ -75,10 +77,20 @@ fun DiaryTheme(
             dark = dark,
         )
     }
+    val scheme = if (glass) {
+        baseScheme.copy(
+            onSurface = glassTokens.text,
+            onBackground = glassTokens.text,
+            onSurfaceVariant = glassTokens.textSecondary,
+            background = if (dark) Color(0xFF0A0D1D) else Color(0xFFEEF4FF),
+        )
+    } else {
+        baseScheme
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
-        val statusDarkIcons = scheme.surface.luminance() > 0.45f
+        val statusDarkIcons = if (glass) !dark else scheme.surface.luminance() > 0.45f
         SideEffect {
             val window = (view.context as Activity).window
             val bar = if (glass) {
@@ -102,6 +114,7 @@ fun DiaryTheme(
     CompositionLocalProvider(
         LocalUiStyle provides appearance.style,
         LocalGlassTokens provides glassTokens,
+        LocalContentColor provides scheme.onSurface,
     ) {
         MaterialTheme(
             colorScheme = scheme,

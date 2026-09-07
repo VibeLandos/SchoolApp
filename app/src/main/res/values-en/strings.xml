@@ -115,6 +115,7 @@
     <string name="lesson_title_edit">Period %d · edit</string>
     <string name="label_room">Room</string>
     <string name="save">Save</string>
+    <string name="lesson_need_subject">Choose a subject first</string>
     <string name="remove_lesson">Remove lesson</string>
     <string name="date_with_weekday">%1$s, %2$s</string>
     <plurals name="photo_count">

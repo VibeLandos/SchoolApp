@@ -115,6 +115,7 @@
     <string name="lesson_title_edit">Урок %d · изменить</string>
     <string name="label_room">Кабинет</string>
     <string name="save">Сохранить</string>
+    <string name="lesson_need_subject">Сначала выбери предмет</string>
     <string name="remove_lesson">Убрать урок</string>
     <string name="date_with_weekday">%1$s, %2$s</string>
     <plurals name="photo_count">

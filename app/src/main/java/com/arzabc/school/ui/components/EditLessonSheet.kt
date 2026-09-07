@@ -13,8 +13,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -98,8 +100,10 @@ fun EditLessonSheet(
                 modifier = Modifier.padding(bottom = 4.dp),
             )
             FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 5,
             ) {
                 periodChoices.forEach { number ->
                     val taken = number != chosenPeriod && number in usedPeriods
@@ -123,8 +127,9 @@ fun EditLessonSheet(
             Spacer(Modifier.height(8.dp))
             val subjects = stringArrayResource(R.array.subjects)
             FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 subjects.forEach { name ->
                     FilterChip(
@@ -143,6 +148,7 @@ fun EditLessonSheet(
                 singleLine = true,
             )
             Spacer(Modifier.height(16.dp))
+            val canSave = subject.isNotBlank()
             Button(
                 onClick = {
                     onSave(
@@ -158,10 +164,22 @@ fun EditLessonSheet(
                     )
                     onDismiss()
                 },
-                enabled = subject.isNotBlank(),
+                enabled = canSave,
                 modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
             ) {
                 Text(stringResource(R.string.save))
+            }
+            if (!canSave) {
+                Text(
+                    text = stringResource(R.string.lesson_need_subject),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
             if (existing != null) {
                 TextButton(

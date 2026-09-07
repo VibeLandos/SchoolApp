@@ -69,7 +69,7 @@ fun NowScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             ScreenHeader(
@@ -85,8 +85,8 @@ fun NowScreen(
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 when (status) {
-                    NowStatus.Sunday -> Text(stringResource(R.string.now_sunday), style = MaterialTheme.typography.titleLarge)
-                    NowStatus.NoLessons -> Text(stringResource(R.string.now_no_lessons), style = MaterialTheme.typography.titleLarge)
+                    NowStatus.Sunday -> NowIdleCard(stringResource(R.string.now_sunday))
+                    NowStatus.NoLessons -> NowIdleCard(stringResource(R.string.now_no_lessons))
                     is NowStatus.Before -> NowHero(
                         eyebrow = stringResource(R.string.now_until_start),
                         title = stringResource(
@@ -137,14 +137,10 @@ fun NowScreen(
                             formatHm(status.next.end),
                         ),
                     )
-                    is NowStatus.After -> {
-                        Text(stringResource(R.string.now_done), style = MaterialTheme.typography.headlineMedium)
-                        Text(
-                            text = stringResource(R.string.now_last_bell, status.lastEnd),
-                            color = muted,
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
-                    }
+                    is NowStatus.After -> NowIdleCard(
+                        title = stringResource(R.string.now_done),
+                        subtitle = stringResource(R.string.now_last_bell, status.lastEnd),
+                    )
                 }
             }
         }
@@ -177,6 +173,23 @@ fun NowScreen(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun NowIdleCard(title: String, subtitle: String? = null) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val muted = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+    DiaryCard {
+        Text(text = title, style = MaterialTheme.typography.headlineMedium)
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                color = muted,
+                modifier = Modifier.padding(top = 8.dp),
+            )
         }
     }
 }
