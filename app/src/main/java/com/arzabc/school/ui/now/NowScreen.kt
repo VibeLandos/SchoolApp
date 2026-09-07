@@ -3,10 +3,8 @@
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,8 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arzabc.school.R
@@ -31,12 +32,13 @@ import com.arzabc.school.data.NowStatus
 import com.arzabc.school.data.TimedLesson
 import com.arzabc.school.data.WeekBells
 import com.arzabc.school.data.formatHm
+import com.arzabc.school.data.lessonSpanProgress
 import com.arzabc.school.data.nowStatus
 import com.arzabc.school.data.spanProgress
+import com.arzabc.school.data.timedLessonsForDay
 import com.arzabc.school.ui.components.DiaryCard
-import com.arzabc.school.ui.components.PeriodBadge
+import com.arzabc.school.ui.components.LessonProgressRing
 import com.arzabc.school.ui.components.ScreenHeader
-import com.arzabc.school.ui.components.SpanProgressBar
 import com.arzabc.school.ui.components.isGlassStyle
 import com.arzabc.school.ui.theme.LocalGlassTokens
 import java.time.LocalDate
@@ -63,9 +65,13 @@ fun NowScreen(
     val status = remember(today, time, lessons, bells, schoolDays) {
         nowStatus(today, time, lessons, bells, schoolDays)
     }
+    val todayLessons = remember(today, lessons, bells, schoolDays) {
+        timedLessonsForDay(today, lessons, bells, schoolDays)
+    }
     val glass = isGlassStyle()
     val tokens = LocalGlassTokens.current
     val muted = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+    val currentPeriod = (status as? NowStatus.InLesson)?.current?.period
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -90,16 +96,15 @@ fun NowScreen(
                     is NowStatus.Before -> NowHero(
                         eyebrow = stringResource(R.string.now_until_start),
                         title = stringResource(
-                            R.string.now_next_lesson,
+                            R.string.now_in_lesson,
                             status.first.period,
                             status.first.subject,
-                            formatHm(status.first.start),
-                            formatHm(status.first.end),
                         ),
                         timerLabel = stringResource(R.string.now_until_start),
                         minutes = status.minutes,
                         untilDayEnd = status.untilDayEnd,
-                        progress = null,
+                        progress = 0f,
+                        meta = lessonMeta(status.first),
                     )
                     is NowStatus.InLesson -> NowHero(
                         eyebrow = stringResource(R.string.now_current),
@@ -112,15 +117,7 @@ fun NowScreen(
                         minutes = status.minutes,
                         untilDayEnd = status.untilDayEnd,
                         progress = spanProgress(status.current.start, status.current.end, time),
-                        meta = buildString {
-                            append(formatHm(status.current.start))
-                            append("–")
-                            append(formatHm(status.current.end))
-                            if (status.current.room.isNotBlank()) {
-                                append(" · ")
-                                append(stringResource(R.string.room_short, status.current.room))
-                            }
-                        },
+                        meta = lessonMeta(status.current),
                     )
                     is NowStatus.InBreak -> NowHero(
                         eyebrow = stringResource(R.string.now_break),
@@ -130,12 +127,10 @@ fun NowScreen(
                         untilDayEnd = status.untilDayEnd,
                         progress = spanProgress(status.breakStart, status.next.start, time),
                         meta = stringResource(
-                            R.string.now_next_lesson,
+                            R.string.now_in_lesson,
                             status.next.period,
                             status.next.subject,
-                            formatHm(status.next.start),
-                            formatHm(status.next.end),
-                        ),
+                        ) + " · " + formatHm(status.next.start) + "–" + formatHm(status.next.end),
                     )
                     is NowStatus.After -> NowIdleCard(
                         title = stringResource(R.string.now_done),
@@ -144,21 +139,10 @@ fun NowScreen(
                 }
             }
         }
-        val remaining = when (status) {
-            is NowStatus.Before -> status.remaining
-            is NowStatus.InLesson -> status.remaining
-            is NowStatus.InBreak -> status.remaining
-            else -> emptyList()
-        }
-        val currentPeriod = (status as? NowStatus.InLesson)?.current?.period
-        if (remaining.isNotEmpty()) {
+        if (todayLessons.isNotEmpty()) {
             item {
                 Text(
-                    text = if (status is NowStatus.InBreak) {
-                        stringResource(R.string.now_next_up)
-                    } else {
-                        stringResource(R.string.now_remaining_today)
-                    },
+                    text = stringResource(R.string.now_today_lessons),
                     color = muted,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
@@ -166,14 +150,25 @@ fun NowScreen(
                     modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
                 )
             }
-            items(remaining, key = { it.period }) { item ->
-                RemainingRow(
+            items(todayLessons, key = { it.period }) { item ->
+                LessonNowRow(
                     item = item,
+                    progress = lessonSpanProgress(item, time),
                     happening = item.period == currentPeriod,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun lessonMeta(lesson: TimedLesson): String {
+    val range = "${formatHm(lesson.start)}–${formatHm(lesson.end)}"
+    return if (lesson.room.isNotBlank()) {
+        "$range · ${stringResource(R.string.room_short, lesson.room)}"
+    } else {
+        range
     }
 }
 
@@ -201,89 +196,162 @@ private fun NowHero(
     timerLabel: String,
     minutes: Int,
     untilDayEnd: Int,
-    progress: Float?,
+    progress: Float,
     meta: String? = null,
 ) {
     val glass = isGlassStyle()
     val tokens = LocalGlassTokens.current
     val scheme = MaterialTheme.colorScheme
+    val muted = if (glass) tokens.textSecondary else scheme.onPrimaryContainer.copy(alpha = 0.85f)
     DiaryCard(highlighted = !glass) {
-        Text(
-            text = eyebrow.uppercase(),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = if (glass) tokens.accent else scheme.onPrimaryContainer.copy(alpha = 0.8f),
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        meta?.let {
-            Text(
-                text = it,
-                color = if (glass) tokens.textSecondary else scheme.onPrimaryContainer.copy(alpha = 0.85f),
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
         Row(
-            Modifier.padding(top = 16.dp),
-            verticalAlignment = Alignment.Bottom,
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = timerLabel,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(end = 10.dp, bottom = 4.dp),
-            )
-            Text(
-                text = remainingLabel(minutes),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        if (untilDayEnd > 0) {
-            Text(
-                text = stringResource(R.string.now_until_day_end, remainingLabel(untilDayEnd)),
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        }
-        if (progress != null) {
-            SpanProgressBar(progress)
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp),
+            ) {
+                Text(
+                    text = eyebrow.uppercase(),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (glass) tokens.accent else scheme.onPrimaryContainer.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(top = 6.dp),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                meta?.let {
+                    Text(
+                        text = it,
+                        color = muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 4.dp),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    text = timerLabel,
+                    fontSize = 13.sp,
+                    color = muted,
+                    modifier = Modifier.padding(top = 12.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (untilDayEnd > 0) {
+                    Text(
+                        text = stringResource(R.string.now_until_day_end, remainingLabel(untilDayEnd)),
+                        fontSize = 13.sp,
+                        color = muted,
+                        modifier = Modifier.padding(top = 4.dp),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            LessonProgressRing(progress = progress, diameter = 96.dp, stroke = 7.dp) {
+                RingCountdown(minutes)
+            }
         }
     }
 }
 
 @Composable
-private fun RemainingRow(
+private fun RingCountdown(minutes: Int) {
+    val hours = minutes / 60
+    val rest = minutes % 60
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (hours > 0) {
+            Text(
+                text = stringResource(R.string.now_ring_hours, hours),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = stringResource(R.string.now_ring_minutes, rest),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        } else {
+            Text(
+                text = rest.toString(),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = stringResource(R.string.now_ring_min_unit),
+                fontSize = 11.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LessonNowRow(
     item: TimedLesson,
+    progress: Float,
     happening: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val glass = isGlassStyle()
     val tokens = LocalGlassTokens.current
-    DiaryCard(modifier = modifier, highlighted = happening) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PeriodBadge(item.period, highlighted = happening)
-            Text(
-                text = item.subject,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier
-                    .padding(start = 10.dp)
+    val scheme = MaterialTheme.colorScheme
+    val muted = when {
+        glass -> tokens.textSecondary
+        happening -> scheme.onPrimaryContainer.copy(alpha = 0.75f)
+        else -> scheme.onSurfaceVariant
+    }
+    val done = progress >= 1f && !happening
+    DiaryCard(
+        modifier = modifier.alpha(if (done) 0.55f else 1f),
+        highlighted = happening,
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LessonProgressRing(progress = progress, diameter = 44.dp, stroke = 3.5.dp) {
+                Text(
+                    text = item.period.toString(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                )
+            }
+            Column(
+                Modifier
+                    .padding(start = 12.dp)
                     .weight(1f),
-                maxLines = 1,
-            )
-            Text(
-                text = if (happening) {
-                    stringResource(R.string.now_current)
-                } else {
-                    formatHm(item.start)
-                },
-                color = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-            )
+            ) {
+                Text(
+                    text = item.subject,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = lessonMeta(item),
+                    color = muted,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

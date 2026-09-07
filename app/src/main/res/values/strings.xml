@@ -79,6 +79,10 @@
     <string name="now_until_bell">до звонка</string>
     <string name="now_remaining_today">Осталось сегодня</string>
     <string name="now_next_up">Дальше сегодня</string>
+    <string name="now_today_lessons">Уроки сегодня</string>
+    <string name="now_ring_hours">%d ч</string>
+    <string name="now_ring_minutes">%d мин</string>
+    <string name="now_ring_min_unit">мин</string>
     <string name="homework_tag">Домашнее задание</string>
     <string name="homework_none">д/з не задано</string>
     <string name="diary_empty_body">В этот день расписания пока нет. Добавьте урок или вставьте готовое расписание текстом.</string>

@@ -46,16 +46,7 @@ fun nowStatus(
     schoolDays: Int = 6,
 ): NowStatus {
     if (Dates.isWeekend(date, schoolDays)) return NowStatus.Sunday
-    val day = Dates.schoolDayOfWeek(date)
-    val filled = lessons
-        .filter { it.dayOfWeek == day }
-        .sortedBy { it.period }
-        .mapNotNull { lesson ->
-            val slot = bells.of(lesson.period)
-            val start = parseHm(slot.start) ?: return@mapNotNull null
-            val end = parseHm(slot.end) ?: return@mapNotNull null
-            TimedLesson(lesson.period, start, end, lesson.subject, lesson.room)
-        }
+    val filled = timedLessonsForDay(date, lessons, bells, schoolDays)
     if (filled.isEmpty()) return NowStatus.NoLessons
     val lastEnd = filled.last().end
     val untilDayEnd = minutesUntil(time, lastEnd)
@@ -100,8 +91,33 @@ fun minutesUntil(from: LocalTime, to: LocalTime): Int {
     return ((seconds + 59) / 60).toInt()
 }
 
+fun timedLessonsForDay(
+    date: LocalDate,
+    lessons: List<Lesson>,
+    bells: BellSchedule,
+    schoolDays: Int = 6,
+): List<TimedLesson> {
+    if (Dates.isWeekend(date, schoolDays)) return emptyList()
+    val day = Dates.schoolDayOfWeek(date)
+    return lessons
+        .filter { it.dayOfWeek == day }
+        .sortedBy { it.period }
+        .mapNotNull { lesson ->
+            val slot = bells.of(lesson.period)
+            val start = parseHm(slot.start) ?: return@mapNotNull null
+            val end = parseHm(slot.end) ?: return@mapNotNull null
+            TimedLesson(lesson.period, start, end, lesson.subject, lesson.room)
+        }
+}
+
 fun spanProgress(start: LocalTime, end: LocalTime, now: LocalTime): Float {
     val total = Duration.between(start, end).seconds.coerceAtLeast(1)
     val elapsed = Duration.between(start, now).seconds.coerceAtLeast(0)
     return (elapsed.toFloat() / total).coerceIn(0f, 1f)
+}
+
+fun lessonSpanProgress(lesson: TimedLesson, now: LocalTime): Float = when {
+    now < lesson.start -> 0f
+    now >= lesson.end -> 1f
+    else -> spanProgress(lesson.start, lesson.end, now)
 }

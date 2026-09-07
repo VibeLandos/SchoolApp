@@ -79,6 +79,10 @@
     <string name="now_until_bell">until the bell</string>
     <string name="now_remaining_today">Left today</string>
     <string name="now_next_up">Up next today</string>
+    <string name="now_today_lessons">Today’s lessons</string>
+    <string name="now_ring_hours">%d h</string>
+    <string name="now_ring_minutes">%d min</string>
+    <string name="now_ring_min_unit">min</string>
     <string name="homework_tag">Homework</string>
     <string name="homework_none">no homework</string>
     <string name="diary_empty_body">No lessons this day yet. Add one or paste a schedule as text.</string>
