@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -21,10 +23,35 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // minSdk 24 otherwise drops v1; some file managers / Play Protect then treat the APK as unsigned.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+        val propsFile = rootProject.file("signing/keystore.properties")
+        if (propsFile.exists()) {
+            create("release") {
+                val props = Properties()
+                propsFile.inputStream().use { props.load(it) }
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
