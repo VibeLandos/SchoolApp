@@ -83,6 +83,17 @@
     <string name="now_ring_hours">%d h</string>
     <string name="now_ring_minutes">%d min</string>
     <string name="now_ring_min_unit">min</string>
+    <string name="year_until_end">until the school year ends</string>
+    <string name="year_until_start">until the school year starts</string>
+    <string name="year_ended">the school year is over</string>
+    <string name="year_set_dates">Tap to set the dates</string>
+    <string name="year_sheet_title">School year</string>
+    <string name="year_start">Start</string>
+    <string name="year_end">End</string>
+    <string name="year_months_days">%1$d mo %2$d d</string>
+    <string name="year_days_only">%d d</string>
+    <string name="year_range">%1$s — %2$s</string>
+    <string name="cancel">Cancel</string>
     <string name="homework_tag">Homework</string>
     <string name="homework_none">no homework</string>
     <string name="diary_empty_body">No lessons this day yet. Add one or paste a schedule as text.</string>

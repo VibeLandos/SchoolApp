@@ -1,5 +1,6 @@
 ﻿package com.arzabc.school.ui.now
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import com.arzabc.school.R
 import com.arzabc.school.data.Dates
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.NowStatus
+import com.arzabc.school.data.SchoolYear
 import com.arzabc.school.data.TimedLesson
 import com.arzabc.school.data.WeekBells
 import com.arzabc.school.data.formatHm
@@ -39,10 +41,12 @@ import com.arzabc.school.data.timedLessonsForDay
 import com.arzabc.school.ui.components.DiaryCard
 import com.arzabc.school.ui.components.LessonProgressRing
 import com.arzabc.school.ui.components.ScreenHeader
+import com.arzabc.school.ui.components.SchoolYearSheet
 import com.arzabc.school.ui.components.isGlassStyle
 import com.arzabc.school.ui.theme.LocalGlassTokens
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Period
 import kotlinx.coroutines.delay
 
 @Composable
@@ -50,10 +54,13 @@ fun NowScreen(
     lessons: List<Lesson>,
     weekBells: WeekBells,
     schoolDays: Int,
+    schoolYear: SchoolYear,
+    onSaveSchoolYear: (SchoolYear) -> Unit,
     onOpenMenu: () -> Unit,
 ) {
     var today by remember { mutableStateOf(LocalDate.now()) }
     var time by remember { mutableStateOf(LocalTime.now()) }
+    var editingYear by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {
             today = LocalDate.now()
@@ -76,6 +83,7 @@ fun NowScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item {
             ScreenHeader(
@@ -89,54 +97,13 @@ fun NowScreen(
             )
         }
         item {
-            Column(Modifier.padding(horizontal = 16.dp)) {
-                when (status) {
-                    NowStatus.Sunday -> NowIdleCard(stringResource(R.string.now_sunday))
-                    NowStatus.NoLessons -> NowIdleCard(stringResource(R.string.now_no_lessons))
-                    is NowStatus.Before -> NowHero(
-                        eyebrow = stringResource(R.string.now_until_start),
-                        title = stringResource(
-                            R.string.now_in_lesson,
-                            status.first.period,
-                            status.first.subject,
-                        ),
-                        timerLabel = stringResource(R.string.now_until_start),
-                        minutes = status.minutes,
-                        untilDayEnd = status.untilDayEnd,
-                        progress = 0f,
-                        meta = lessonMeta(status.first),
-                    )
-                    is NowStatus.InLesson -> NowHero(
-                        eyebrow = stringResource(R.string.now_current),
-                        title = stringResource(
-                            R.string.now_in_lesson,
-                            status.current.period,
-                            status.current.subject,
-                        ),
-                        timerLabel = stringResource(R.string.now_until_bell),
-                        minutes = status.minutes,
-                        untilDayEnd = status.untilDayEnd,
-                        progress = spanProgress(status.current.start, status.current.end, time),
-                        meta = lessonMeta(status.current),
-                    )
-                    is NowStatus.InBreak -> NowHero(
-                        eyebrow = stringResource(R.string.now_break),
-                        title = stringResource(R.string.now_break),
-                        timerLabel = stringResource(R.string.now_until_break_end),
-                        minutes = status.minutes,
-                        untilDayEnd = status.untilDayEnd,
-                        progress = spanProgress(status.breakStart, status.next.start, time),
-                        meta = stringResource(
-                            R.string.now_in_lesson,
-                            status.next.period,
-                            status.next.subject,
-                        ) + " · " + formatHm(status.next.start) + "–" + formatHm(status.next.end),
-                    )
-                    is NowStatus.After -> NowIdleCard(
-                        title = stringResource(R.string.now_done),
-                        subtitle = stringResource(R.string.now_last_bell, status.lastEnd),
-                    )
-                }
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                NowStatusRing(status = status, time = time)
             }
         }
         if (todayLessons.isNotEmpty()) {
@@ -147,7 +114,9 @@ fun NowScreen(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 0.6.sp,
-                    modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
                 )
             }
             items(todayLessons, key = { it.period }) { item ->
@@ -159,8 +128,130 @@ fun NowScreen(
                 )
             }
         }
+        item {
+            YearCountdownCard(
+                today = today,
+                year = schoolYear,
+                onClick = { editingYear = true },
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+            )
+        }
+    }
+
+    if (editingYear) {
+        SchoolYearSheet(
+            year = schoolYear,
+            onDismiss = { editingYear = false },
+            onSave = onSaveSchoolYear,
+        )
     }
 }
+
+@Composable
+private fun NowStatusRing(status: NowStatus, time: LocalTime) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val scheme = MaterialTheme.colorScheme
+    val muted = if (glass) tokens.textSecondary else scheme.onSurfaceVariant
+    val ring = when (status) {
+        NowStatus.Sunday -> RingContent(
+            progress = 0f,
+            title = stringResource(R.string.now_sunday),
+            subtitle = null,
+            minutes = null,
+            caption = null,
+        )
+        NowStatus.NoLessons -> RingContent(
+            progress = 0f,
+            title = stringResource(R.string.now_no_lessons),
+            subtitle = null,
+            minutes = null,
+            caption = null,
+        )
+        is NowStatus.Before -> RingContent(
+            progress = 0f,
+            title = stringResource(R.string.now_in_lesson, status.first.period, status.first.subject),
+            subtitle = lessonMeta(status.first),
+            minutes = status.minutes,
+            caption = stringResource(R.string.now_until_start),
+        )
+        is NowStatus.InLesson -> RingContent(
+            progress = spanProgress(status.current.start, status.current.end, time),
+            title = stringResource(R.string.now_in_lesson, status.current.period, status.current.subject),
+            subtitle = lessonMeta(status.current),
+            minutes = status.minutes,
+            caption = stringResource(R.string.now_until_bell),
+        )
+        is NowStatus.InBreak -> RingContent(
+            progress = spanProgress(status.breakStart, status.next.start, time),
+            title = stringResource(R.string.now_break),
+            subtitle = stringResource(
+                R.string.now_in_lesson,
+                status.next.period,
+                status.next.subject,
+            ),
+            minutes = status.minutes,
+            caption = stringResource(R.string.now_until_break_end),
+        )
+        is NowStatus.After -> RingContent(
+            progress = 1f,
+            title = stringResource(R.string.now_done),
+            subtitle = stringResource(R.string.now_last_bell, status.lastEnd),
+            minutes = null,
+            caption = null,
+        )
+    }
+    LessonProgressRing(progress = ring.progress, diameter = 260.dp, stroke = 8.dp) {
+        Column(
+            modifier = Modifier.padding(horizontal = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (ring.minutes != null) {
+                RingCountdown(ring.minutes)
+                Text(
+                    text = ring.caption.orEmpty(),
+                    color = muted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            Text(
+                text = ring.title,
+                style = if (ring.minutes == null && ring.title.length < 28) {
+                    MaterialTheme.typography.titleLarge
+                } else {
+                    MaterialTheme.typography.titleMedium
+                },
+                textAlign = TextAlign.Center,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = if (ring.minutes == null) 0.dp else 8.dp),
+            )
+            ring.subtitle?.let {
+                Text(
+                    text = it,
+                    color = muted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+private data class RingContent(
+    val progress: Float,
+    val title: String,
+    val subtitle: String?,
+    val minutes: Int?,
+    val caption: String?,
+)
 
 @Composable
 private fun lessonMeta(lesson: TimedLesson): String {
@@ -173,98 +264,6 @@ private fun lessonMeta(lesson: TimedLesson): String {
 }
 
 @Composable
-private fun NowIdleCard(title: String, subtitle: String? = null) {
-    val glass = isGlassStyle()
-    val tokens = LocalGlassTokens.current
-    val muted = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant
-    DiaryCard {
-        Text(text = title, style = MaterialTheme.typography.headlineMedium)
-        if (subtitle != null) {
-            Text(
-                text = subtitle,
-                color = muted,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun NowHero(
-    eyebrow: String,
-    title: String,
-    timerLabel: String,
-    minutes: Int,
-    untilDayEnd: Int,
-    progress: Float,
-    meta: String? = null,
-) {
-    val glass = isGlassStyle()
-    val tokens = LocalGlassTokens.current
-    val scheme = MaterialTheme.colorScheme
-    val muted = if (glass) tokens.textSecondary else scheme.onPrimaryContainer.copy(alpha = 0.85f)
-    DiaryCard(highlighted = !glass) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(end = 12.dp),
-            ) {
-                Text(
-                    text = eyebrow.uppercase(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (glass) tokens.accent else scheme.onPrimaryContainer.copy(alpha = 0.8f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(top = 6.dp),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                meta?.let {
-                    Text(
-                        text = it,
-                        color = muted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(top = 4.dp),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Text(
-                    text = timerLabel,
-                    fontSize = 13.sp,
-                    color = muted,
-                    modifier = Modifier.padding(top = 12.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (untilDayEnd > 0) {
-                    Text(
-                        text = stringResource(R.string.now_until_day_end, remainingLabel(untilDayEnd)),
-                        fontSize = 13.sp,
-                        color = muted,
-                        modifier = Modifier.padding(top = 4.dp),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            LessonProgressRing(progress = progress, diameter = 96.dp, stroke = 7.dp) {
-                RingCountdown(minutes)
-            }
-        }
-    }
-}
-
-@Composable
 private fun RingCountdown(minutes: Int) {
     val hours = minutes / 60
     val rest = minutes % 60
@@ -272,32 +271,95 @@ private fun RingCountdown(minutes: Int) {
         if (hours > 0) {
             Text(
                 text = stringResource(R.string.now_ring_hours, hours),
-                fontSize = 16.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
             Text(
                 text = stringResource(R.string.now_ring_minutes, rest),
-                fontSize = 12.sp,
+                fontSize = 16.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
         } else {
             Text(
                 text = rest.toString(),
-                fontSize = 22.sp,
+                fontSize = 40.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
             Text(
                 text = stringResource(R.string.now_ring_min_unit),
-                fontSize = 11.sp,
+                fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
         }
+    }
+}
+
+@Composable
+private fun YearCountdownCard(
+    today: LocalDate,
+    year: SchoolYear,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val muted = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+    val ended = !today.isBefore(year.end)
+    val untilStart = today.isBefore(year.start)
+    val target = when {
+        ended -> year.end
+        untilStart -> year.start
+        else -> year.end
+    }
+    val period = Period.between(today, target).let { if (it.isNegative) Period.ZERO else it }
+    val months = period.years * 12 + period.months
+    val label = if (untilStart) {
+        stringResource(R.string.year_until_start)
+    } else {
+        stringResource(R.string.year_until_end)
+    }
+    val remainingText = if (ended) {
+        stringResource(R.string.year_ended)
+    } else if (months > 0) {
+        stringResource(R.string.year_months_days, months, period.days)
+    } else {
+        stringResource(R.string.year_days_only, period.days)
+    }
+    DiaryCard(modifier = modifier, onClick = onClick) {
+        Text(
+            text = label.uppercase(),
+            color = if (glass) tokens.accent else MaterialTheme.colorScheme.primary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.4.sp,
+        )
+        Text(
+            text = remainingText,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Text(
+            text = stringResource(
+                R.string.year_range,
+                Dates.formatDayMonth(year.start),
+                Dates.formatFull(year.end),
+            ),
+            color = muted,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            text = stringResource(R.string.year_set_dates),
+            color = muted,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 6.dp),
+        )
     }
 }
 
@@ -318,7 +380,7 @@ private fun LessonNowRow(
     }
     val done = progress >= 1f && !happening
     DiaryCard(
-        modifier = modifier.alpha(if (done) 0.55f else 1f),
+        modifier = modifier.alpha(if (done) 0.7f else 1f),
         highlighted = happening,
     ) {
         Row(
@@ -353,16 +415,5 @@ private fun LessonNowRow(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun remainingLabel(minutes: Int): String {
-    val hours = minutes / 60
-    val rest = minutes % 60
-    return if (hours > 0) {
-        stringResource(R.string.now_hours_minutes, hours, rest)
-    } else {
-        stringResource(R.string.now_minutes, minutes)
     }
 }

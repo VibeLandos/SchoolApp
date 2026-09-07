@@ -273,6 +273,8 @@ fun SchoolApp(
                             lessons = ui.lessons,
                             weekBells = ui.weekBells,
                             schoolDays = ui.schoolDays,
+                            schoolYear = ui.schoolYear,
+                            onSaveSchoolYear = viewModel::setSchoolYear,
                             onOpenMenu = openMenu,
                         )
                     }

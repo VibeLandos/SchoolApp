@@ -134,7 +134,9 @@ fun DiaryCard(
             .padding(14.dp),
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {
-            content()
+            Column(Modifier.fillMaxWidth()) {
+                content()
+            }
         }
     }
 }

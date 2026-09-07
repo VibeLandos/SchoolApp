@@ -11,6 +11,7 @@ import com.arzabc.school.data.HomeworkPhoto
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.SchedulePayload
 import com.arzabc.school.data.ScheduleText
+import com.arzabc.school.data.SchoolYear
 import com.arzabc.school.data.WeekBells
 import java.io.File
 import java.time.LocalDate
@@ -29,6 +30,7 @@ data class DiaryUiState(
     val photos: List<HomeworkPhoto> = emptyList(),
     val weekBells: WeekBells = WeekBells(),
     val schoolDays: Int = 6,
+    val schoolYear: SchoolYear = SchoolYear.academicFor(),
 )
 
 class SchoolViewModel(application: Application) : AndroidViewModel(application) {
@@ -41,9 +43,11 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         repository.lessons,
         repository.homework,
         repository.photos,
-        combine(settings.weekBells, settings.schoolDays) { bells, days -> bells to days },
-    ) { date, lessons, homework, photos, bellsAndDays ->
-        val (weekBells, schoolDays) = bellsAndDays
+        combine(settings.weekBells, settings.schoolDays, settings.schoolYear) { bells, days, year ->
+            Triple(bells, days, year)
+        },
+    ) { date, lessons, homework, photos, settingsSlice ->
+        val (weekBells, schoolDays, schoolYear) = settingsSlice
         val clamped = Dates.clampToSchoolWeek(date, schoolDays)
         DiaryUiState(
             selectedDate = clamped,
@@ -53,6 +57,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
             photos = photos,
             weekBells = weekBells,
             schoolDays = schoolDays,
+            schoolYear = schoolYear,
         )
     }.stateIn(
         viewModelScope,
@@ -107,6 +112,10 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         val value = days.coerceIn(5, 6)
         settings.setSchoolDays(value)
         selectedDate.value = Dates.clampToSchoolWeek(selectedDate.value, value)
+    }
+
+    fun setSchoolYear(year: SchoolYear) {
+        settings.setSchoolYear(year)
     }
 
     fun shareDayText(): String {

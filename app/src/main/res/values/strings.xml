@@ -83,6 +83,17 @@
     <string name="now_ring_hours">%d ч</string>
     <string name="now_ring_minutes">%d мин</string>
     <string name="now_ring_min_unit">мин</string>
+    <string name="year_until_end">до конца учебного года</string>
+    <string name="year_until_start">до начала учебного года</string>
+    <string name="year_ended">учебный год закончился</string>
+    <string name="year_set_dates">Нажмите, чтобы установить даты</string>
+    <string name="year_sheet_title">Учебный год</string>
+    <string name="year_start">Начало</string>
+    <string name="year_end">Конец</string>
+    <string name="year_months_days">%1$d мес %2$d дн</string>
+    <string name="year_days_only">%d дн</string>
+    <string name="year_range">%1$s — %2$s</string>
+    <string name="cancel">Отмена</string>
     <string name="homework_tag">Домашнее задание</string>
     <string name="homework_none">д/з не задано</string>
     <string name="diary_empty_body">В этот день расписания пока нет. Добавьте урок или вставьте готовое расписание текстом.</string>

@@ -9,6 +9,7 @@ import com.arzabc.school.ui.theme.Appearance
 import com.arzabc.school.ui.theme.ColorSeed
 import com.arzabc.school.ui.theme.ThemeBrightness
 import com.arzabc.school.ui.theme.UiStyle
+import java.time.LocalDate
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,8 @@ class ThemeSettings(context: Context) {
     val weekBells: StateFlow<WeekBells> = _weekBells.asStateFlow()
     private val _schoolDays = MutableStateFlow(loadSchoolDays())
     val schoolDays: StateFlow<Int> = _schoolDays.asStateFlow()
+    private val _schoolYear = MutableStateFlow(loadSchoolYear())
+    val schoolYear: StateFlow<SchoolYear> = _schoolYear.asStateFlow()
 
     fun setStyle(style: UiStyle) {
         write(_appearance.value.copy(style = style))
@@ -69,6 +72,15 @@ class ThemeSettings(context: Context) {
         _schoolDays.value = value
     }
 
+    fun setSchoolYear(value: SchoolYear) {
+        val year = value.normalized()
+        prefs.edit()
+            .putLong(KEY_YEAR_START, year.start.toEpochDay())
+            .putLong(KEY_YEAR_END, year.end.toEpochDay())
+            .apply()
+        _schoolYear.value = year
+    }
+
     private fun write(next: Appearance) {
         prefs.edit()
             .putString(KEY_STYLE, next.style.prefValue)
@@ -80,6 +92,18 @@ class ThemeSettings(context: Context) {
 
     private fun loadSchoolDays(): Int =
         prefs.getInt(KEY_SCHOOL_DAYS, 6).coerceIn(5, 6)
+
+    private fun loadSchoolYear(): SchoolYear {
+        val startDay = prefs.getLong(KEY_YEAR_START, Long.MIN_VALUE)
+        val endDay = prefs.getLong(KEY_YEAR_END, Long.MIN_VALUE)
+        if (startDay == Long.MIN_VALUE || endDay == Long.MIN_VALUE) {
+            return SchoolYear.academicFor()
+        }
+        return SchoolYear(
+            start = LocalDate.ofEpochDay(startDay),
+            end = LocalDate.ofEpochDay(endDay),
+        ).normalized()
+    }
 
     private fun loadAppearance(): Appearance {
         val storedStyle = prefs.getString(KEY_STYLE, null)
@@ -117,6 +141,8 @@ class ThemeSettings(context: Context) {
         private const val KEY_BELLS_DAYS = "bells_days"
         private const val KEY_BELLS_SETUP = "bells_setup"
         private const val KEY_SCHOOL_DAYS = "school_days"
+        private const val KEY_YEAR_START = "school_year_start"
+        private const val KEY_YEAR_END = "school_year_end"
 
         fun wrapContext(base: Context): Context {
             val prefs = base.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
