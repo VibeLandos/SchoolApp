@@ -59,6 +59,9 @@ object Dates {
     fun formatFull(date: LocalDate): String =
         date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", locale()))
 
+    fun formatDayMonth(date: LocalDate): String =
+        date.format(DateTimeFormatter.ofPattern("d MMM", locale()))
+
     fun weekdayName(date: LocalDate): String {
         val loc = locale()
         return date.dayOfWeek.getDisplayName(TextStyle.FULL, loc)

@@ -8,10 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.toArgb
 import com.arzabc.school.data.ThemeSettings
 import com.arzabc.school.ui.SchoolApp
-import com.arzabc.school.ui.theme.CoverDeep
 import com.arzabc.school.ui.theme.DiaryTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,17 +20,25 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(CoverDeep.toArgb()),
-            navigationBarStyle = SystemBarStyle.dark(CoverDeep.toArgb()),
+            statusBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+            ),
         )
         val settings = (application as SchoolApplication).themeSettings
         setContent {
-            val mode by settings.mode.collectAsState()
+            val appearance by settings.appearance.collectAsState()
             val language by settings.language.collectAsState()
-            DiaryTheme(mode = mode) {
+            DiaryTheme(appearance = appearance) {
                 SchoolApp(
-                    themeMode = mode,
-                    onThemeMode = settings::setMode,
+                    appearance = appearance,
+                    onStyle = settings::setStyle,
+                    onBrightness = settings::setBrightness,
+                    onSeed = settings::setSeed,
                     language = language,
                     onLanguage = { next ->
                         if (next != language) {

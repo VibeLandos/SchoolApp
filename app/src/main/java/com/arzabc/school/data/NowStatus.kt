@@ -33,6 +33,7 @@ sealed interface NowStatus {
         val next: TimedLesson,
         val untilDayEnd: Int,
         val remaining: List<TimedLesson>,
+        val breakStart: LocalTime,
     ) : NowStatus
     data class After(val lastEnd: String) : NowStatus
 }
@@ -84,6 +85,7 @@ fun nowStatus(
                         next = next,
                         untilDayEnd = untilDayEnd,
                         remaining = filled.drop(index + 1),
+                        breakStart = lesson.end,
                     )
                 }
             }
@@ -96,4 +98,10 @@ fun minutesUntil(from: LocalTime, to: LocalTime): Int {
     val seconds = Duration.between(from, to).seconds
     if (seconds <= 0) return 0
     return ((seconds + 59) / 60).toInt()
+}
+
+fun spanProgress(start: LocalTime, end: LocalTime, now: LocalTime): Float {
+    val total = Duration.between(start, end).seconds.coerceAtLeast(1)
+    val elapsed = Duration.between(start, now).seconds.coerceAtLeast(0)
+    return (elapsed.toFloat() / total).coerceIn(0f, 1f)
 }

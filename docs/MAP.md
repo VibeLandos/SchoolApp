@@ -8,8 +8,8 @@ Android-приложение **Дневник**: расписание по дн�
 |---|---|
 | `app/src/main/AndroidManifest.xml` | Application + launcher Activity |
 | `app/src/main/java/com/arzabc/school/SchoolApplication.kt` | Room + `SchoolRepository` + `ThemeSettings` |
-| `app/src/main/java/com/arzabc/school/MainActivity.kt` | Compose, `DiaryTheme(mode)`, `SchoolApp` |
-| `app/src/main/java/com/arzabc/school/ui/SchoolApp.kt` | Навигация, нижнее меню (дневник / сейчас / задания), drawer, шиты |
+| `app/src/main/java/com/arzabc/school/MainActivity.kt` | Compose, `DiaryTheme(appearance)`, `SchoolApp` |
+| `app/src/main/java/com/arzabc/school/ui/SchoolApp.kt` | Навигация, нижнее меню MD3 или стеклянный pill, FAB / капсула «урок», drawer, шиты |
 | `app/src/main/java/com/arzabc/school/ui/SchoolViewModel.kt` | Состояние дня/недели, запись в репозиторий |
 
 ## Данные (`.../data/`)
@@ -25,24 +25,27 @@ Android-приложение **Дневник**: расписание по дн�
 | `BellSchedule.kt` | рецепт звонков, расписание на неделю и отдельные дни (`WeekBells`) |
 | `ScheduleText.kt` | текст дня/недели для отправки и вставки (уроки + звонки, без д/з) |
 | `NowStatus.kt` | сейчас урок / перемена / до начала / конец дня / выходной |
-| `ThemeSettings.kt` | режим темы, язык, звонки, длина учебной недели (5/6) |
+| `ThemeSettings.kt` | стиль (You / стекло), яркость, seed-цвет, язык, звонки, длина учебной недели (5/6) |
 
 ## Экраны (`.../ui/`)
 
 | Файл | Роль |
 |---|---|
-| `diary/DiaryScreen.kt` | Страница дневника: пейджер пн–сб, только вписанные уроки + «добавить урок»; время из звонков этого дня |
+| `diary/DiaryScreen.kt` | Страница дня: пейджер пн–сб, карточки уроков + «добавить урок»; время из звонков; метка «идёт сейчас» |
+| `components/AppSurfaces.kt` | Шапка экрана, карточка, бейдж номера, кружки цветов, прогресс |
 | `components/HomeworkPhotoThumb.kt` | Превью фото (декод в IO) |
 | `homework/HomeworkListScreen.kt` | Вкладка «Задания»: список д/з, переход на день |
-| `now/NowScreen.kt` | Вкладка «Сейчас»: сколько до конца урока или перемены и до конца дня |
+| `now/NowScreen.kt` | Вкладка «Сейчас»: до конца урока/перемены и дня, полоска прогресса |
 | `components/EditHomeworkSheet.kt` | Вписать/стереть д/з, прикрепить несколько фото |
 | `components/EditLessonSheet.kt` | Предмет, кабинет, номер урока; время из звонков |
 | `components/ImportScheduleSheet.kt` | вставить текст расписания |
-| `theme/Color.kt`, `Type.kt`, `Theme.kt` | Палитры обложки, ночной страницы и Material You; `LocalDiaryPalette` |
-| `menu/AppDrawer.kt` | Боковое меню: оформление, язык, неделя, звонки, отправка/вставка |
+| `theme/Color.kt`, `Type.kt`, `Theme.kt`, `Glass.kt` | MD3 seed-палитры, стекло, `Appearance` / `LocalUiStyle` |
+| `menu/AppDrawer.kt` | Боковое меню: You / стекло / яркость, язык, неделя, звонки, отправка/вставка |
 | `menu/BellScheduleSheet.kt` | Первый заход — быстрая настройка; далее звонки по дням пн–сб |
 
-Нижние вкладки: **Дневник** (`diary`), **Сейчас** (`now`), **Задания** (`tasks`). Меню: иконка «гамбургер» на всех экранах. Язык: русский по умолчанию, английский из меню. Учебная неделя: 5 или 6 дней. Звонки: быстрая настройка на неделю, день можно задать отдельно. Расписание дня/недели можно отправить текстом и вставить обратно.
+Нижние вкладки: **Дневник** (`diary`), **Сейчас** (`now`), **Задания** (`tasks`). Меню: иконка «гамбургер» на всех экранах. Оформление: Material You (обои или seed) либо iOS-стекло; светлая / тёмная / система. Язык: русский по умолчанию, английский из меню. Учебная неделя: 5 или 6 дней. Звонки: быстрая настройка на неделю, день можно задать отдельно. Расписание дня/недели можно отправить текстом и вставить обратно.
+
+Макет-спека: `docs/design/prototype.html` (Gemini HTML: MD3 + стекло, все экраны).
 
 ## Сборка
 
@@ -56,4 +59,4 @@ Android-приложение **Дневник**: расписание по дн�
 
 ## Документы для агента
 
-`docs/MAP.md` (этот файл), `docs/PLAN.md`, `docs/CHANGELOG.md`, правило `.cursor/rules/project.mdc`
+`docs/MAP.md` (этот файл), `docs/PLAN.md`, `docs/CHANGELOG.md`, `docs/design/prototype.html` (макет MD3 + стекло), правило `.cursor/rules/project.mdc`

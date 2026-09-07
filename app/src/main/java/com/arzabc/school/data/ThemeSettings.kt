@@ -5,7 +5,10 @@ import android.content.res.Configuration
 import android.os.LocaleList
 import androidx.annotation.StringRes
 import com.arzabc.school.R
-import com.arzabc.school.ui.theme.ThemeMode
+import com.arzabc.school.ui.theme.Appearance
+import com.arzabc.school.ui.theme.ColorSeed
+import com.arzabc.school.ui.theme.ThemeBrightness
+import com.arzabc.school.ui.theme.UiStyle
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +27,8 @@ enum class AppLanguage(val prefValue: String, val locale: Locale, @StringRes val
 
 class ThemeSettings(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    private val _mode = MutableStateFlow(ThemeMode.fromPref(prefs.getString(KEY_MODE, null)))
-    val mode: StateFlow<ThemeMode> = _mode.asStateFlow()
+    private val _appearance = MutableStateFlow(loadAppearance())
+    val appearance: StateFlow<Appearance> = _appearance.asStateFlow()
     private val _language = MutableStateFlow(AppLanguage.fromPref(prefs.getString(KEY_LANGUAGE, null)))
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
@@ -34,9 +37,16 @@ class ThemeSettings(context: Context) {
     private val _schoolDays = MutableStateFlow(loadSchoolDays())
     val schoolDays: StateFlow<Int> = _schoolDays.asStateFlow()
 
-    fun setMode(mode: ThemeMode) {
-        prefs.edit().putString(KEY_MODE, mode.prefValue).apply()
-        _mode.value = mode
+    fun setStyle(style: UiStyle) {
+        write(_appearance.value.copy(style = style))
+    }
+
+    fun setBrightness(brightness: ThemeBrightness) {
+        write(_appearance.value.copy(brightness = brightness))
+    }
+
+    fun setSeed(seed: ColorSeed) {
+        write(_appearance.value.copy(style = UiStyle.Material, seed = seed))
     }
 
     fun setLanguage(language: AppLanguage) {
@@ -59,8 +69,33 @@ class ThemeSettings(context: Context) {
         _schoolDays.value = value
     }
 
+    private fun write(next: Appearance) {
+        prefs.edit()
+            .putString(KEY_STYLE, next.style.prefValue)
+            .putString(KEY_BRIGHTNESS, next.brightness.prefValue)
+            .putString(KEY_SEED, next.seed.prefValue)
+            .apply()
+        _appearance.value = next
+    }
+
     private fun loadSchoolDays(): Int =
         prefs.getInt(KEY_SCHOOL_DAYS, 6).coerceIn(5, 6)
+
+    private fun loadAppearance(): Appearance {
+        val storedStyle = prefs.getString(KEY_STYLE, null)
+        if (storedStyle != null) {
+            return Appearance(
+                style = UiStyle.fromPref(storedStyle),
+                brightness = ThemeBrightness.fromPref(prefs.getString(KEY_BRIGHTNESS, null)),
+                seed = ColorSeed.fromPref(prefs.getString(KEY_SEED, null)),
+            )
+        }
+        return when (prefs.getString(KEY_MODE, null)) {
+            "dark" -> Appearance(UiStyle.Material, ThemeBrightness.Dark, ColorSeed.Indigo)
+            "system" -> Appearance(UiStyle.Material, ThemeBrightness.System, ColorSeed.Wallpaper)
+            else -> Appearance(UiStyle.Material, ThemeBrightness.Light, ColorSeed.Indigo)
+        }
+    }
 
     private fun loadWeekBells(): WeekBells {
         val raw = prefs.getString(KEY_BELLS, null)
@@ -74,6 +109,9 @@ class ThemeSettings(context: Context) {
     companion object {
         private const val PREFS = "diary_settings"
         private const val KEY_MODE = "theme_mode"
+        private const val KEY_STYLE = "ui_style"
+        private const val KEY_BRIGHTNESS = "theme_brightness"
+        private const val KEY_SEED = "color_seed"
         private const val KEY_LANGUAGE = "language"
         private const val KEY_BELLS = "bells"
         private const val KEY_BELLS_DAYS = "bells_days"

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -28,8 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arzabc.school.R
-import com.arzabc.school.ui.theme.CoverDeep
-import com.arzabc.school.ui.theme.Paper
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -118,7 +117,7 @@ fun HomeworkPhotoThumb(
                 Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Paper.copy(alpha = 0.3f))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .clickable(onClick = onClick),
             )
         }
@@ -128,12 +127,12 @@ fun HomeworkPhotoThumb(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .size(24.dp)
-                    .background(CoverDeep.copy(alpha = 0.7f), CircleShape),
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f), CircleShape),
             ) {
                 Icon(
                     Icons.Filled.Close,
                     contentDescription = stringResource(R.string.cd_remove_photo),
-                    tint = Paper,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(14.dp),
                 )
             }

@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивный Прототип Дневника — M3 vs Liquid Glass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       1. СИСТЕМА ТОКЕНОВ ДИЗАЙНА (CSS VARIABLES)
+       ========================================================================== */
+    :root {
+      /* Внешняя панель управления */
+      --ctrl-bg: #1e2025;
+      --ctrl-panel: #272a31;
+      --ctrl-border: #383c46;
+      --ctrl-text: #f0f2f7;
+      --ctrl-muted: #9ba1b0;
+      --ctrl-accent: #3b82f6;
+
+      /* === MD3 PALETTES ПО СИД-ЦВЕТАМ === */
+      /* 1. Indigo / Blue (Default) */
+      --m3-seed-indigo-primary: #0061A4;
+      --m3-seed-indigo-pc: #D1E4FF;
+      --m3-seed-indigo-on-pc: #001D36;
+      --m3-seed-indigo-sc: #D7E3F7;
+      --m3-seed-indigo-on-sc: #101C2B;
+      --m3-seed-indigo-primary-dark: #A8C7FA;
+      --m3-seed-indigo-pc-dark: #004881;
+      --m3-seed-indigo-on-pc-dark: #D1E4FF;
+      --m3-seed-indigo-sc-dark: #3E4759;
+      --m3-seed-indigo-on-sc-dark: #D7E3F7;
+
+      /* 2. Teal */
+      --m3-seed-teal-primary: #006A60;
+      --m3-seed-teal-pc: #73F8E7;
+      --m3-seed-teal-on-pc: #00201C;
+      --m3-seed-teal-sc: #CCE8E3;
+      --m3-seed-teal-on-sc: #05201D;
+      --m3-seed-teal-primary-dark: #53DBCB;
+      --m3-seed-teal-pc-dark: #005048;
+      --m3-seed-teal-on-pc-dark: #73F8E7;
+      --m3-seed-teal-sc-dark: #334B47;
+      --m3-seed-teal-on-sc-dark: #CCE8E3;
+
+      /* 3. Coral */
+      --m3-seed-coral-primary: #9C4235;
+      --m3-seed-coral-pc: #FFDAD4;
+      --m3-seed-coral-on-pc: #3E0400;
+      --m3-seed-coral-sc: #F4DDDA;
+      --m3-seed-coral-on-sc: #2A1614;
+      --m3-seed-coral-primary-dark: #FFB4A8;
+      --m3-seed-coral-pc-dark: #7D2C20;
+      --m3-seed-coral-on-pc-dark: #FFDAD4;
+      --m3-seed-coral-sc-dark: #5A403C;
+      --m3-seed-coral-on-sc-dark: #F4DDDA;
+
+      /* 4. Purple */
+      --m3-seed-purple-primary: #6750A4;
+      --m3-seed-purple-pc: #EADDFF;
+      --m3-seed-purple-on-pc: #21005D;
+      --m3-seed-purple-sc: #E8DEF8;
+      --m3-seed-purple-on-sc: #1D192B;
+      --m3-seed-purple-primary-dark: #D0BCFF;
+      --m3-seed-purple-pc-dark: #4F378B;
+      --m3-seed-purple-on-pc-dark: #EADDFF;
+      --m3-seed-purple-sc-dark: #4A4458;
+      --m3-seed-purple-on-sc-dark: #E8DEF8;
+
+      /* Текущие активные динамические переменные M3 (по умолчанию Indigo Light) */
+      --m3-primary: var(--m3-seed-indigo-primary);
+      --m3-primary-container: var(--m3-seed-indigo-pc);
+      --m3-on-primary-container: var(--m3-seed-indigo-on-pc);
+      --m3-secondary-container: var(--m3-seed-indigo-sc);
+      --m3-on-secondary-container: var(--m3-seed-indigo-on-sc);
+
+      /* Базовые поверхности M3 Light */
+      --m3-surface: #FDFBFF;
+      --m3-surface-container-low: #F3F3FA;
+      --m3-surface-container: #EDEDF4;
+      --m3-surface-container-high: #E7E7EE;
+      --m3-surface-container-highest: #E1E2E8;
+      --m3-on-surface: #1A1C1E;
+      --m3-on-surface-variant: #43474E;
+      --m3-outline: #73777F;
+      --m3-outline-variant: #C3C7D0;
+      --m3-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+      --m3-elevation-3: 0 4px 8px rgba(0,0,0,0.14), 0 6px 12px rgba(0,0,0,0.10);
+
+      /* === LIQUID GLASS ТОКЕНЫ (Light) === */
+      --lg-bg: rgba(255, 255, 255, 0.45);
+      --lg-subtle: rgba(255, 255, 255, 0.28);
+      --lg-border: rgba(255, 255, 255, 0.65);
+      --lg-specular: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.15);
+      --lg-shadow: 0 10px 30px -5px rgba(22, 28, 45, 0.08), 0 2px 6px 0 rgba(0, 0, 0, 0.03);
+      --lg-text-primary: rgba(18, 20, 26, 0.94);
+      --lg-text-secondary: rgba(60, 64, 76, 0.68);
+      --lg-text-tertiary: rgba(80, 85, 98, 0.45);
+      --lg-accent: #007AFF;
+      --lg-blur: 28px;
+    }
+
+    /* M3 Dark Surfaces */
+    [data-theme="dark"][data-style="md3"] {
+      --m3-surface: #111318;
+      --m3-surface-container-low: #191C20;
+      --m3-surface-container: #1D2024;
+      --m3-surface-container-high: #282A2F;
+      --m3-surface-container-highest: #33353A;
+      --m3-on-surface: #E2E2E9;
+      --m3-on-surface-variant: #C4C6D0;
+      --m3-outline: #8E9099;
+      --m3-outline-variant: #44474F;
+      --m3-elevation-1: 0 1px 3px 1px rgba(0,0,0,0.4);
+      --m3-elevation-3: 0 4px 8px 3px rgba(0,0,0,0.45);
+    }
+
+    /* Liquid Glass Dark Surfaces */
+    [data-theme="dark"][data-style="glass"] {
+      --lg-bg: rgba(18, 22, 34, 0.55);
+      --lg-subtle: rgba(255, 255, 255, 0.08);
+      --lg-border: rgba(255, 255, 255, 0.22);
+      --lg-specular: inset 0 1.5px 0.5px 0 rgba(255, 255, 255, 0.85), inset 0 3px 6px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.08);
+      --lg-shadow: 0 14px 40px -4px rgba(0, 0, 0, 0.65), 0 3px 10px 0 rgba(0, 0, 0, 0.35);
+      --lg-text-primary: rgba(255, 255, 255, 0.98);
+      --lg-text-secondary: rgba(235, 235, 245, 0.68);
+      --lg-text-tertiary: rgba(235, 235, 245, 0.42);
+      --lg-accent: #2997FF;
+      --lg-blur: 48px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #111216;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Roboto", sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ==========================================================================
+       2. ВНЕШНЯЯ ПАНЕЛЬ УПРАВЛЕНИЯ ПРОТОТИПОМ
+       ========================================================================== */
+    .prototype-sidebar {
+      width: 320px;
+      background: var(--ctrl-panel);
+      border-right: 1px solid var(--ctrl-border);
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+
+    .sidebar-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--ctrl-text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      color: var(--ctrl-muted);
+      margin-top: 4px;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ctrl-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--ctrl-muted);
+    }
+
+    .segmented-ctrl {
+      display: flex;
+      background: #191b20;
+      border-radius: 8px;
+      padding: 3px;
+      border: 1px solid var(--ctrl-border);
+      gap: 3px;
+    }
+
+    .segmented-btn {
+      flex: 1;
+      padding: 7px 10px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--ctrl-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .segmented-btn.active {
+      background: var(--ctrl-accent);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Семена цветов M3 */
+    .color-seeds-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #191b20;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--ctrl-border);
+    }
+
+    .seed-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      border: 2px solid transparent;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .seed-dot:hover {
+      transform: scale(1.1);
+    }
+
+    .seed-dot.active {
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(255,255,255,0.4);
+    }
+
+    .seed-dot[data-seed="indigo"] { background: #0061A4; }
+    .seed-dot[data-seed="teal"] { background: #006A60; }
+    .seed-dot[data-seed="coral"] { background: #9C4235; }
+    .seed-dot[data-seed="purple"] { background: #6750A4; }
+
+    /* Список экранов прототипа */
+    .screen-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .screen-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: #191b20;
+      border: 1px solid transparent;
+      color: #cbd5e1;
+      font-size: 12.5px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .screen-btn:hover {
+      background: #232730;
+      border-color: var(--ctrl-border);
+    }
+
+    .screen-btn.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--ctrl-accent);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    .screen-btn span.badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #282e3d;
+      color: #94a3b8;
+    }
+
+    /* ==========================================================================
+       3. ОБЛАСТЬ ТЕЛЕФОНА И СТИЛЕВЫЕ ОБОЛОЧКИ
+       ========================================================================== */
+    .phone-stage {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px;
+      background: radial-gradient(circle at 60% 40%, #171a22 0%, #0d0e12 100%);
+    }
+
+    /* Оболочка Canvas */
+    .phone-canvas {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                  height 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                  border-radius 0.3s ease;
+      user-select: none;
+    }
+
+    /* 3.1 ТЕХНИЧЕСКИЕ ПАРАМЕТРЫ MD3 (Pixel) */
+    .phone-canvas[data-style="md3"] {
+      width: 412px;
+      height: 892px;
+      border-radius: 36px;
+      background: var(--m3-surface);
+      box-shadow: 0 25px 70px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08);
+      font-family: 'Roboto', sans-serif;
+    }
+
+    /* 3.2 ТЕХНИЧЕСКИЕ ПАРАМЕТРЫ LIQUID GLASS (iPhone) */
+    .phone-canvas[data-style="glass"] {
+      width: 393px;
+      height: 852px;
+      border-radius: 54px;
+      background: #000;
+      box-shadow: 0 35px 90px rgba(0,0,0,0.8), inset 0 0 0 1.5px rgba(255,255,255,0.18);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+    }
+
+    /* Жидкие обои для Glass */
+    .ambient-wallpaper {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .phone-canvas[data-style="glass"] .ambient-wallpaper {
+      display: block;
+    }
+
+    .phone-canvas[data-style="glass"][data-theme="light"] .ambient-wallpaper {
+      background: 
+        radial-gradient(circle at 15% 10%, rgba(120, 200, 255, 0.75) 0%, transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(255, 170, 200, 0.65) 0%, transparent 50%),
+        radial-gradient(circle at 50% 65%, rgba(180, 150, 255, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 90% 90%, rgba(130, 230, 215, 0.65) 0%, transparent 50%),
+        linear-gradient(165deg, #eef4ff 0%, #fdf2f7 50%, #effaf7 100%);
+      filter: saturate(150%);
+    }
+
+    .phone-canvas[data-style="glass"][data-theme="dark"] .ambient-wallpaper {
+      background: 
+        radial-gradient(circle at 18% 12%, rgba(41, 151, 255, 0.65) 0%, transparent 45%),
+        radial-gradient(circle at 85% 20%, rgba(218, 62, 236, 0.6) 0%, transparent 48%),
+        radial-gradient(circle at 45% 58%, rgba(88, 86, 214, 0.7) 0%, transparent 55%),
+        radial-gradient(circle at 88% 85%, rgba(48, 209, 88, 0.55) 0%, transparent 50%),
+        linear-gradient(170deg, #0a0d1d 0%, #110c24 50%, #061118 100%);
+      filter: saturate(190%);
+    }
+
+    /* Аппаратные элементы */
+    .m3-status-bar {
+      display: none;
+      height: 48px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      color: var(--m3-on-surface);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+
+    .phone-canvas[data-style="md3"] .m3-status-bar {
+      display: flex;
+    }
+
+    .camera-cutout {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #000;
+    }
+
+    .dynamic-island {
+      display: none;
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 124px;
+      height: 35px;
+      background: #000;
+      border-radius: 24px;
+      z-index: 100;
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .phone-canvas[data-style="glass"] .dynamic-island {
+      display: block;
+    }
+
+    /* Жестовые индикаторы */
+    .m3-gesture-bar {
+      display: none;
+      height: 16px;
+      background: var(--m3-surface-container);
+      justify-content: center;
+      align-items: center;
+      padding-bottom: 6px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .phone-canvas[data-style="md3"] .m3-gesture-bar {
+      display: flex;
+    }
+
+    .m3-gesture-handle {
+      width: 72px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--m3-on-surface-variant);
+    }
+
+    .glass-home-indicator {
+      display: none;
+      width: 138px;
+      height: 5px;
+      border-radius: 10px;
+      margin-top: 14px;
+      flex-shrink: 0;
+    }
+
+    .phone-canvas[data-style="glass"] .glass-home-indicator {
+      display: block;
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .phone-canvas[data-style="glass"][data-theme="dark"] .glass-home-indicator {
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    /* ==========================================================================
+       4. ВЕРХНИЕ ПАНЕЛИ НАВИГАЦИИ (TOP BAR)
+       ========================================================================== */
+    .app-header {
+      position: relative;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    /* Спецификация MD3 Top Bar */
+    .phone-canvas[data-style="md3"] .app-header {
+      padding: 6px 16px 14px 16px;
+      background: var(--m3-surface);
+      border-bottom: 1px solid var(--m3-outline-variant);
+    }
+
+    /* Спецификация Liquid Glass Top Bar */
+    .phone-canvas[data-style="glass"] .app-header {
+      padding: 52px 18px 14px 18px;
+      backdrop-filter: blur(var(--lg-blur)) saturate(190%);
+      -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(190%);
+      background: var(--lg-bg);
+      border-bottom: 1px solid var(--lg-border);
+      box-shadow: var(--lg-shadow);
+    }
+
+    .header-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      padding: 6px;
+      color: inherit;
+    }
+
+    .phone-canvas[data-style="md3"] .icon-btn {
+      color: var(--m3-on-surface);
+    }
+
+    .phone-canvas[data-style="glass"] .icon-btn {
+      color: var(--lg-text-primary);
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular);
+    }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .phone-canvas[data-style="md3"] .header-subtitle {
+      color: var(--m3-primary);
+    }
+
+    .phone-canvas[data-style="glass"] .header-subtitle {
+      color: var(--lg-accent);
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      line-height: 26px;
+    }
+
+    .phone-canvas[data-style="md3"] .header-title {
+      color: var(--m3-on-surface);
+      font-weight: 400;
+      font-size: 24px;
+    }
+
+    .phone-canvas[data-style="glass"] .header-title {
+      color: var(--lg-text-primary);
+    }
+
+    /* Кнопка добавления в Liquid Glass тулбаре */
+    .glass-add-pill {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      border-radius: 20px;
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular);
+      color: var(--lg-text-primary);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .phone-canvas[data-style="glass"] .glass-add-pill {
+      display: flex;
+    }
+
+    /* Полоса дней недели (ПН–СБ) */
+    .week-strip {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      justify-content: space-between;
+    }
+
+    .day-item {
+      flex: 1;
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .day-item span.d-name {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .day-item span.d-num {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    /* Стилизация полосы в MD3 */
+    .phone-canvas[data-style="md3"] .day-item {
+      border-radius: 12px;
+      background: var(--m3-surface-container-low);
+      border: 1px solid var(--m3-outline-variant);
+      color: var(--m3-on-surface-variant);
+    }
+
+    .phone-canvas[data-style="md3"] .day-item.selected {
+      background: var(--m3-secondary-container);
+      color: var(--m3-on-secondary-container);
+      border-color: var(--m3-primary);
+    }
+
+    /* Стилизация полосы в Glass */
+    .phone-canvas[data-style="glass"] .day-item {
+      border-radius: 14px;
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      color: var(--lg-text-secondary);
+      box-shadow: var(--lg-specular);
+    }
+
+    .phone-canvas[data-style="glass"] .day-item.selected {
+      background: rgba(255, 255, 255, 0.88);
+      color: #111;
+      border-color: #fff;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+
+    .phone-canvas[data-style="glass"][data-theme="dark"] .day-item.selected {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.9), 0 4px 16px rgba(41, 151, 255, 0.3);
+    }
+
+    /* ==========================================================================
+       5. ОСНОВНАЯ ОБЛАСТЬ КОНТЕНТА (SCROLL VIEW)
+       ========================================================================== */
+    .content-viewport {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px 96px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+    }
+
+    .content-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* 5.1 Карточки уроков */
+    .lesson-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .phone-canvas[data-style="md3"] .lesson-card {
+      background: var(--m3-surface-container-low);
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: var(--m3-elevation-1);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .phone-canvas[data-style="glass"] .lesson-card {
+      background: var(--lg-bg);
+      backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+      -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+      border-radius: 22px;
+      padding: 14px;
+      border: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular), var(--lg-shadow);
+    }
+
+    .lesson-main-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lesson-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lesson-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .phone-canvas[data-style="md3"] .lesson-number {
+      background: var(--m3-surface-container-highest);
+      color: var(--m3-on-surface);
+    }
+
+    .phone-canvas[data-style="glass"] .lesson-number {
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      color: var(--lg-text-primary);
+      box-shadow: var(--lg-specular);
+    }
+
+    .lesson-info .subj-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .phone-canvas[data-style="md3"] .lesson-info .subj-title {
+      color: var(--m3-on-surface);
+      font-weight: 500;
+    }
+
+    .phone-canvas[data-style="glass"] .lesson-info .subj-title {
+      color: var(--lg-text-primary);
+    }
+
+    .lesson-info .subj-time {
+      font-size: 12.5px;
+      margin-top: 2px;
+    }
+
+    .phone-canvas[data-style="md3"] .lesson-info .subj-time {
+      color: var(--m3-on-surface-variant);
+    }
+
+    .phone-canvas[data-style="glass"] .lesson-info .subj-time {
+      color: var(--lg-text-secondary);
+    }
+
+    .room-badge {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .phone-canvas[data-style="md3"] .room-badge {
+      background: var(--m3-surface-container-highest);
+      color: var(--m3-on-surface-variant);
+    }
+
+    .phone-canvas[data-style="glass"] .room-badge {
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      color: var(--lg-text-secondary);
+    }
+
+    /* 5.2 Блок домашнего задания */
+    .homework-box {
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .phone-canvas[data-style="md3"] .homework-box {
+      background: var(--m3-surface-container-high);
+    }
+
+    .phone-canvas[data-style="glass"] .homework-box {
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      border-radius: 14px;
+    }
+
+    .hw-head-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    /* Чекбокс «сделано» */
+    .hw-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .phone-canvas[data-style="md3"] .hw-checkbox {
+      border: 2px solid var(--m3-outline);
+    }
+
+    .phone-canvas[data-style="md3"] .hw-checkbox.checked {
+      background: var(--m3-primary);
+      border-color: var(--m3-primary);
+    }
+
+    .phone-canvas[data-style="glass"] .hw-checkbox {
+      border-radius: 50%;
+      border: 1.5px solid var(--lg-accent);
+    }
+
+    .phone-canvas[data-style="glass"] .hw-checkbox.checked {
+      background: var(--lg-accent);
+    }
+
+    .hw-checkbox.checked::after {
+      content: '';
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .hw-text {
+      font-size: 13.5px;
+      line-height: 18px;
+    }
+
+    .phone-canvas[data-style="md3"] .hw-text {
+      color: var(--m3-on-surface);
+    }
+
+    .phone-canvas[data-style="glass"] .hw-text {
+      color: var(--lg-text-primary);
+    }
+
+    .hw-photos-row {
+      display: flex;
+      gap: 8px;
+      margin-left: 27px;
+    }
+
+    .photo-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .photo-thumb.p1 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .photo-thumb.p2 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .photo-thumb.p3 { background: linear-gradient(135deg, #10b981, #047857); }
+
+    /* ==========================================================================
+       6. НИЖНИЕ ЭЛЕМЕНТЫ УПРАВЛЕНИЯ (FAB & TAB BAR)
+       ========================================================================== */
+    /* MD3 FAB */
+    .m3-fab {
+      display: none;
+      position: absolute;
+      bottom: 96px;
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--m3-primary-container);
+      color: var(--m3-on-primary-container);
+      box-shadow: var(--m3-elevation-3);
+      border: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 25;
+    }
+
+    .phone-canvas[data-style="md3"] .m3-fab {
+      display: flex;
+    }
+
+    /* 6.1 MD3 Navigation Bar (80dp, прижатый к низу) */
+    .m3-nav-bar {
+      display: none;
+      height: 80px;
+      background: var(--m3-surface-container);
+      justify-content: space-around;
+      align-items: center;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .phone-canvas[data-style="md3"] .m3-nav-bar {
+      display: flex;
+    }
+
+    .m3-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .m3-pill-box {
+      width: 64px;
+      height: 32px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .m3-nav-item.active .m3-pill-box {
+      background: var(--m3-secondary-container);
+      color: var(--m3-on-secondary-container);
+    }
+
+    .m3-nav-item:not(.active) .m3-pill-box {
+      color: var(--m3-on-surface-variant);
+    }
+
+    .m3-nav-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--m3-on-surface-variant);
+    }
+
+    .m3-nav-item.active .m3-nav-title {
+      font-weight: 700;
+      color: var(--m3-on-surface);
+    }
+
+    .m3-tab-badge {
+      position: absolute;
+      top: 4px;
+      right: 14px;
+      background: #B3261E;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 4px;
+      height: 14px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 6.2 Liquid Glass Floating Tab Bar (Glass Pill над Home Indicator) */
+    .glass-tab-wrapper {
+      display: none;
+      position: absolute;
+      bottom: 22px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: center;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    .phone-canvas[data-style="glass"] .glass-tab-wrapper {
+      display: flex;
+    }
+
+    .glass-tab-bar {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border-radius: 36px;
+      background: var(--lg-bg);
+      backdrop-filter: blur(var(--lg-blur)) saturate(200%);
+      -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(200%);
+      border: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular), var(--lg-shadow);
+    }
+
+    .glass-tab-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 28px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--lg-text-secondary);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .glass-tab-item.active {
+      background: rgba(255, 255, 255, 0.9);
+      color: #111;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .phone-canvas[data-theme="dark"] .glass-tab-item.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      box-shadow: inset 0 1px 0.5px rgba(255,255,255,0.8);
+    }
+
+    .glass-tab-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      background: var(--lg-accent);
+      color: #fff;
+    }
+
+    /* ==========================================================================
+       7. СПЕЦИАЛЬНЫЕ ЭКРАНЫ И ОВЕРЛЕИ (11 ЭКРАНОВ)
+       ========================================================================== */
+    .empty-center-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .phone-canvas[data-style="md3"] .empty-title { color: var(--m3-on-surface); }
+    .phone-canvas[data-style="glass"] .empty-title { color: var(--lg-text-primary); }
+
+    /* Кнопка добавить в центре пустого экрана */
+    .btn-center-add {
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .phone-canvas[data-style="md3"] .btn-center-add {
+      border-radius: 20px;
+      background: var(--m3-secondary-container);
+      color: var(--m3-on-secondary-container);
+      border: none;
+    }
+
+    .phone-canvas[data-style="glass"] .btn-center-add {
+      border-radius: 20px;
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      color: var(--lg-accent);
+      box-shadow: var(--lg-specular);
+    }
+
+    /* 7.1 Экран «Сейчас» (Now Hero Cards) */
+    .now-hero-card {
+      border-radius: 24px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .phone-canvas[data-style="md3"] .now-hero-card {
+      background: var(--m3-primary-container);
+      color: var(--m3-on-primary-container);
+    }
+
+    .phone-canvas[data-style="glass"] .now-hero-card {
+      background: var(--lg-bg);
+      backdrop-filter: blur(var(--lg-blur));
+      -webkit-backdrop-filter: blur(var(--lg-blur));
+      border: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular), var(--lg-shadow);
+      color: var(--lg-text-primary);
+    }
+
+    .now-hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .now-timer-val {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin: 4px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .now-subtext {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin: 8px 0 2px 4px;
+    }
+
+    .phone-canvas[data-style="md3"] .section-label { color: var(--m3-primary); }
+    .phone-canvas[data-style="glass"] .section-label { color: var(--lg-accent); }
+
+    /* 7.2 Экран «Задания» (Фильтры задач) */
+    .tasks-filter-strip {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .task-chip {
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .phone-canvas[data-style="md3"] .task-chip {
+      background: var(--m3-surface-container-low);
+      border: 1px solid var(--m3-outline-variant);
+      color: var(--m3-on-surface-variant);
+    }
+
+    .phone-canvas[data-style="md3"] .task-chip.active {
+      background: var(--m3-secondary-container);
+      color: var(--m3-on-secondary-container);
+      border-color: var(--m3-primary);
+    }
+
+    .phone-canvas[data-style="glass"] .task-chip {
+      background: var(--lg-subtle);
+      border: 1px solid var(--lg-border);
+      color: var(--lg-text-secondary);
+    }
+
+    .phone-canvas[data-style="glass"] .task-chip.active {
+      background: rgba(255,255,255,0.85);
+      color: #111;
+      border-color: #fff;
+    }
+
+    .phone-canvas[data-style="glass"][data-theme="dark"] .task-chip.active {
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      border-color: rgba(255,255,255,0.55);
+    }
+
+    /* 7.3 Оверлеи: Затемнение (Scrim), Drawer и Modal Bottom Sheets */
+    .overlay-scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 80;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .overlay-scrim.visible {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Боковое меню (Drawer) */
+    .drawer-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 310px;
+      z-index: 90;
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 44px 20px 24px 20px;
+      gap: 18px;
+    }
+
+    .drawer-panel.visible {
+      transform: translateX(0);
+    }
+
+    .phone-canvas[data-style="md3"] .drawer-panel {
+      background: var(--m3-surface-container-low);
+      border-radius: 0 28px 28px 0;
+      box-shadow: var(--m3-elevation-3);
+      color: var(--m3-on-surface);
+    }
+
+    .phone-canvas[data-style="glass"] .drawer-panel {
+      background: var(--lg-bg);
+      backdrop-filter: blur(var(--lg-blur)) saturate(190%);
+      -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(190%);
+      border-right: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular), 0 0 40px rgba(0,0,0,0.4);
+      color: var(--lg-text-primary);
+    }
+
+    .drawer-item-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      opacity: 0.7;
+    }
+
+    .drawer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(128,128,128,0.15);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Нижние листы (Modal Bottom Sheets) */
+    .bottom-sheet-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 90;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 20px 32px 20px;
+      gap: 16px;
+      max-height: 85%;
+      overflow-y: auto;
+    }
+
+    .bottom-sheet-panel.visible {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 44px;
+      height: 4px;
+      border-radius: 2px;
+      align-self: center;
+      margin-bottom: 8px;
+    }
+
+    .phone-canvas[data-style="md3"] .bottom-sheet-panel {
+      background: var(--m3-surface-container);
+      border-radius: 28px 28px 0 0;
+      color: var(--m3-on-surface);
+      box-shadow: var(--m3-elevation-3);
+    }
+
+    .phone-canvas[data-style="md3"] .sheet-handle {
+      background: var(--m3-outline);
+    }
+
+    .phone-canvas[data-style="glass"] .bottom-sheet-panel {
+      background: var(--lg-bg);
+      backdrop-filter: blur(var(--lg-blur)) saturate(200%);
+      -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(200%);
+      border-radius: 36px 36px 0 0;
+      border-top: 1px solid var(--lg-border);
+      box-shadow: var(--lg-specular), 0 -10px 40px rgba(0,0,0,0.3);
+      color: var(--lg-text-primary);
+    }
+
+    .phone-canvas[data-style="glass"] .sheet-handle {
+      background: rgba(128,128,128,0.4);
+    }
+
+    .sheet-title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    /* Элементы форм внутри Sheet */
+    .form-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    .number-segments-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .seg-num-btn {
+      flex: 1;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--ctrl-border);
+      background: rgba(128,128,128,0.1);
+      color: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .seg-num-btn.active {
+      background: var(--ctrl-accent);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .sheet-input, .sheet-textarea, .sheet-select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      color: inherit;
+      background: rgba(128,128,128,0.08);
+      border: 1px solid rgba(128,128,128,0.2);
+      outline: none;
+    }
+
+    .sheet-textarea {
+      min-height: 90px;
+      resize: none;
+      line-height: 20px;
+    }
+
+    .sheet-actions-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .sheet-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .sheet-btn.primary {
+      background: var(--ctrl-accent);
+      color: #fff;
+    }
+
+    .sheet-btn.secondary {
+      background: rgba(128,128,128,0.15);
+      color: inherit;
+    }
+  </style>
+</head>
+<body data-theme="light" data-style="md3">
+
+  <!-- ==========================================================================
+       ПАНЕЛЬ УПРАВЛЕНИЯ ПРОТОТИПОМ (СНАРУЖИ ТЕЛЕФОНА)
+       ========================================================================== -->
+  <aside class="prototype-sidebar">
+    <div class="sidebar-header">
+      <h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="4"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+        Дневник Pro
+      </h2>
+      <p>Архитектура: Школьный Дневник</p>
+    </div>
+
+    <!-- 1. Переключатель визуального стиля -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">1. Дизайн-система</span>
+      <div class="segmented-ctrl">
+        <button class="segmented-btn active" data-set-style="md3">Material 3</button>
+        <button class="segmented-btn" data-set-style="glass">Liquid Glass</button>
+      </div>
+    </div>
+
+    <!-- 2. Переключатель темы оформления -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">2. Тема</span>
+      <div class="segmented-ctrl">
+        <button class="segmented-btn active" data-set-theme="light">Light</button>
+        <button class="segmented-btn" data-set-theme="dark">Dark</button>
+      </div>
+    </div>
+
+    <!-- 3. Seed-цвета для Material 3 -->
+    <div class="ctrl-group" id="m3SeedControlGroup">
+      <span class="ctrl-label">3. Dynamic Color (M3 Seed)</span>
+      <div class="color-seeds-row">
+        <div class="seed-dot active" data-seed="indigo" title="Indigo / Blue"></div>
+        <div class="seed-dot" data-seed="teal" title="Teal"></div>
+        <div class="seed-dot" data-seed="coral" title="Coral / Terracotta"></div>
+        <div class="seed-dot" data-seed="purple" title="Purple"></div>
+      </div>
+    </div>
+
+    <!-- 4. Интерактивный список экранов -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">4. Экраны (11 состояний)</span>
+      <div class="screen-nav-list">
+        <button class="screen-btn active" data-screen="diary">
+          <span>1. Дневник (ПН)</span>
+          <span class="badge">6 уроков</span>
+        </button>
+        <button class="screen-btn" data-screen="diary-empty">
+          <span>2. Пустой день (ВТ)</span>
+          <span class="badge">0 уроков</span>
+        </button>
+        <button class="screen-btn" data-screen="now-lesson">
+          <span>3. Сейчас: Урок</span>
+          <span class="badge">Урок 3</span>
+        </button>
+        <button class="screen-btn" data-screen="now-break">
+          <span>4. Сейчас: Перемена</span>
+          <span class="badge">8 мин</span>
+        </button>
+        <button class="screen-btn" data-screen="tasks">
+          <span>5. Задания</span>
+          <span class="badge">3 несдел.</span>
+        </button>
+        <button class="screen-btn" data-screen="drawer">
+          <span>6. Меню (Drawer)</span>
+          <span class="badge">Оверлей</span>
+        </button>
+        <button class="screen-btn" data-screen="sheet-lesson">
+          <span>7. Шит: Урок</span>
+          <span class="badge">Редакт.</span>
+        </button>
+        <button class="screen-btn" data-screen="sheet-homework">
+          <span>8. Шит: Д/З + Фото</span>
+          <span class="badge">Шит</span>
+        </button>
+        <button class="screen-btn" data-screen="bells-quick">
+          <span>9. Звонки: Экспресс</span>
+          <span class="badge">Экран</span>
+        </button>
+        <button class="screen-btn" data-screen="bells-days">
+          <span>10. Звонки: По дням</span>
+          <span class="badge">1–8 уроки</span>
+        </button>
+        <button class="screen-btn" data-screen="sheet-import">
+          <span>11. Шит: Вставка расписания</span>
+          <span class="badge">Импорт</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       РАБОЧАЯ ОБЛАСТЬ С МАКЕТОМ ТЕЛЕФОНА
+       ========================================================================== -->
+  <main class="phone-stage">
+    <div class="phone-canvas" id="phoneCanvas" data-style="md3" data-theme="light">
+      
+      <!-- Liquid Glass Dynamic Ambient Wallpaper -->
+      <div class="ambient-wallpaper"></div>
+
+      <!-- Аппаратный статус бар Android (MD3) -->
+      <div class="m3-status-bar">
+        <span>10:40</span>
+        <div class="camera-cutout"></div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7.5 3 3.7 4.9 1 8l11 13L23 8c-2.7-3.1-6.5-5-11-5z"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17 4h-3V2h-4v2H7v18h10V4z"/></svg>
+        </div>
+      </div>
+
+      <!-- Dynamic Island для iOS Liquid Glass -->
+      <div class="dynamic-island"></div>
+
+      <!-- Верхний тулбар -->
+      <header class="app-header">
+        <div class="header-top-row">
+          <div class="header-left">
+            <button class="icon-btn" id="btnHamburger" aria-label="Меню">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="header-titles">
+              <span class="header-subtitle" id="hdrSub">2-я неделя</span>
+              <h1 class="header-title" id="hdrTitle">Понедельник, 7 сент.</h1>
+            </div>
+          </div>
+          <!-- Кнопка «+ Урок» в Liquid Glass -->
+          <button class="glass-add-pill" id="btnGlassAdd">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
+            <span>Урок</span>
+          </button>
+        </div>
+
+        <!-- Полоса текущей недели ПН–СБ (7–12 сент.) -->
+        <div class="week-strip" id="weekStrip">
+          <div class="day-item selected" data-day="mon">
+            <span class="d-name">ПН</span>
+            <span class="d-num">7</span>
+          </div>
+          <div class="day-item" data-day="tue">
+            <span class="d-name">ВТ</span>
+            <span class="d-num">8</span>
+          </div>
+          <div class="day-item" data-day="wed">
+            <span class="d-name">СР</span>
+            <span class="d-num">9</span>
+          </div>
+          <div class="day-item" data-day="thu">
+            <span class="d-name">ЧТ</span>
+            <span class="d-num">10</span>
+          </div>
+          <div class="day-item" data-day="fri">
+            <span class="d-name">ПТ</span>
+            <span class="d-num">11</span>
+          </div>
+          <div class="day-item" data-day="sat">
+            <span class="d-name">СБ</span>
+            <span class="d-num">12</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Главная прокручиваемая область представления -->
+      <main class="content-viewport" id="contentArea">
+        <!-- Контент инжектируется динамически через JS-шаблонизатор -->
+      </main>
+
+      <!-- Кнопка FAB для MD3 (Добавить УРОК) -->
+      <button class="m3-fab" id="btnMd3Fab" aria-label="Добавить урок">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </button>
+
+      <!-- Навигация MD3 (80dp NavigationBar) -->
+      <nav class="m3-nav-bar" id="m3NavBar">
+        <div class="m3-nav-item active" data-tab="diary">
+          <div class="m3-pill-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z"/></svg>
+          </div>
+          <span class="m3-nav-title">Дневник</span>
+        </div>
+        <div class="m3-nav-item" data-tab="now">
+          <div class="m3-pill-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span class="m3-nav-title">Сейчас</span>
+        </div>
+        <div class="m3-nav-item" data-tab="tasks">
+          <div class="m3-pill-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <span class="m3-tab-badge">3</span>
+          </div>
+          <span class="m3-nav-title">Задания</span>
+        </div>
+      </nav>
+      <div class="m3-gesture-bar">
+        <div class="m3-gesture-handle"></div>
+      </div>
+
+      <!-- Навигация Liquid Glass (Парящий остров над Home Indicator) -->
+      <div class="glass-tab-wrapper">
+        <nav class="glass-tab-bar" id="glassNavBar">
+          <div class="glass-tab-item active" data-tab="diary">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="4"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+            <span>Дневник</span>
+          </div>
+          <div class="glass-tab-item" data-tab="now">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Сейчас</span>
+          </div>
+          <div class="glass-tab-item" data-tab="tasks">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            <span>Задания</span>
+            <span class="glass-tab-badge">3</span>
+          </div>
+        </nav>
+        <div class="glass-home-indicator"></div>
+      </div>
+
+      <!-- ======================================================================
+           ОВЕРЛЕИ: SCRIM, DRAWER, MODAL BOTTOM SHEETS
+           ====================================================================== -->
+      <!-- Затемняющий фон (Scrim) -->
+      <div class="overlay-scrim" id="overlayScrim"></div>
+
+      <!-- 6. Боковое меню (Drawer) -->
+      <aside class="drawer-panel" id="drawerPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <h2 style="font-size:20px; font-weight:700;">Настройки</h2>
+          <button class="icon-btn" id="btnCloseDrawer" style="font-size:18px;">✕</button>
+        </div>
+        
+        <div>
+          <div class="drawer-item-title">Оформление</div>
+          <div class="drawer-row" id="drwStyleToggle">Стиль: <b id="drwStyleVal">Material 3</b></div>
+          <div class="drawer-row" id="drwThemeToggle">Тема: <b id="drwThemeVal">Light</b></div>
+        </div>
+
+        <div>
+          <div class="drawer-item-title">Параметры дневника</div>
+          <div class="drawer-row">Язык: <b>Русский</b></div>
+          <div class="drawer-row">Учебная неделя: <b>6 дней (ПН–СБ)</b></div>
+          <div class="drawer-row" id="drwBellsNav">Расписание звонков →</div>
+        </div>
+
+        <div>
+          <div class="drawer-item-title">Действия</div>
+          <div class="drawer-row">Отправить день</div>
+          <div class="drawer-row">Отправить неделю</div>
+          <div class="drawer-row" id="drwImportNav" style="color:var(--ctrl-accent);">Вставить расписание…</div>
+        </div>
+      </aside>
+
+      <!-- 7. Bottom Sheet: Урок (Добавление / Правка) -->
+      <div class="bottom-sheet-panel" id="sheetLesson">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Урок</h3>
+        <div class="form-field-group">
+          <label class="field-label">Номер урока</label>
+          <div class="number-segments-row">
+            <button class="seg-num-btn">0</button>
+            <button class="seg-num-btn">1</button>
+            <button class="seg-num-btn">2</button>
+            <button class="seg-num-btn">3</button>
+            <button class="seg-num-btn">4</button>
+            <button class="seg-num-btn">5</button>
+            <button class="seg-num-btn">6</button>
+            <button class="seg-num-btn active">7</button>
+            <button class="seg-num-btn">8</button>
+          </div>
+        </div>
+        <div class="form-field-group">
+          <label class="field-label">Предмет</label>
+          <select class="sheet-select">
+            <option selected>Алгебра</option>
+            <option>Русский язык</option>
+            <option>Физика</option>
+            <option>История</option>
+            <option>Информатика</option>
+            <option>Английский язык</option>
+            <option>Геометрия</option>
+            <option>Биология</option>
+          </select>
+        </div>
+        <div class="form-field-group">
+          <label class="field-label">Кабинет (опционально)</label>
+          <input type="text" class="sheet-input" placeholder="Например, 304">
+        </div>
+        <div class="sheet-actions-row">
+          <button class="sheet-btn primary" id="btnSaveLesson">Сохранить</button>
+          <button class="sheet-btn secondary" id="btnDeleteLesson">Удалить</button>
+        </div>
+      </div>
+
+      <!-- 8. Bottom Sheet: Домашнее задание + Фото -->
+      <div class="bottom-sheet-panel" id="sheetHomework">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Домашнее задание: Алгебра</h3>
+        <div class="form-field-group">
+          <textarea class="sheet-textarea">№ 142, 145 (стр. 48) — выполнить в рабочей тетради</textarea>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; margin:4px 0;">
+          <div class="hw-checkbox checked"></div>
+          <span style="font-size:14px; font-weight:600;">Сделано</span>
+        </div>
+        <div class="form-field-group">
+          <label class="field-label">Прикреплённые фото (до 2)</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div class="photo-thumb p1">JPG</div>
+            <div class="photo-thumb p2">PNG</div>
+            <button class="sheet-btn secondary" style="flex:none; padding:8px 14px; border-radius:10px; font-size:12px;">+ Фото</button>
+          </div>
+        </div>
+        <div class="sheet-actions-row">
+          <button class="sheet-btn primary" id="btnSaveHw">Сохранить</button>
+          <button class="sheet-btn secondary" id="btnClearHw">Стереть</button>
+        </div>
+      </div>
+
+      <!-- 11. Bottom Sheet: Вставить расписание -->
+      <div class="bottom-sheet-panel" id="sheetImport">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Вставить расписание</h3>
+        <p style="font-size:12px; opacity:0.8; line-height:16px;">Вставьте текст со звонками и уроками. Существующие домашние задания не будут удалены.</p>
+        <div class="form-field-group">
+          <textarea class="sheet-textarea" style="min-height:130px; font-family:monospace; font-size:12px;">ПН
+1 08:30 Алгебра
+2 09:25 Русский язык
+3 10:25 Физика
+4 11:30 История
+5 12:35 Информатика
+6 13:30 Английский язык</textarea>
+        </div>
+        <div class="sheet-actions-row">
+          <button class="sheet-btn primary" id="btnDoImport">Вставить</button>
+          <button class="sheet-btn secondary" id="btnCancelImport">Отмена</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       8. JAVASCRIPT ЛОГИКА И ШАБЛОНЫ ЭКРАНОВ
+       ========================================================================== -->
+  <script>
+    // --- ДЕМО ДАННЫЕ УРОКОВ (Понедельник 7 сент.) ---
+    const DEMO_MONDAY_LESSONS = [
+      { num: 1, name: "Алгебра", time: "08:30 – 09:15", room: "каб. 304", hw: "№ 142, 145 (стр. 48) — выполнить в рабочей тетради", done: true, photos: 2 },
+      { num: 2, name: "Русский язык", time: "09:25 – 10:10", room: "каб. 210", hw: "Упр. 84, выучить правило на стр. 52 (орфограмма № 14)", done: false, photos: 0 },
+      { num: 3, name: "Физика", time: "10:25 – 11:10", room: "каб. 108", hw: "§ 12 — конспект в тетрадь, ответить на вопросы 1–4", done: true, photos: 0 },
+      { num: 4, name: "История", time: "11:30 – 12:15", room: "каб. 412", hw: null, done: false, photos: 0 },
+      { num: 5, name: "Информатика", time: "12:35 – 13:20", room: "каб. 205", hw: "Практикум №3: закончить обработчик списков на Python", done: true, photos: 0 },
+      { num: 6, name: "Английский язык", time: "13:30 – 14:15", room: "каб. 315", hw: "Workbook: p. 24, ex. 1, 2, 3; выучить слова Module 2B", done: false, photos: 1 }
+    ];
+
+    // --- СОСТОЯНИЕ ПРОТОТИПА ---
+    const state = {
+      style: "md3",
+      theme: "light",
+      seed: "indigo",
+      currentScreen: "diary",
+      activeTab: "diary"
+    };
+
+    // DOM-элементы
+    const phoneCanvas = document.getElementById("phoneCanvas");
+    const contentArea = document.getElementById("contentArea");
+    const hdrTitle = document.getElementById("hdrTitle");
+    const hdrSub = document.getElementById("hdrSub");
+    const weekStrip = document.getElementById("weekStrip");
+    const overlayScrim = document.getElementById("overlayScrim");
+    const drawerPanel = document.getElementById("drawerPanel");
+    const sheetLesson = document.getElementById("sheetLesson");
+    const sheetHomework = document.getElementById("sheetHomework");
+    const sheetImport = document.getElementById("sheetImport");
+    const m3SeedGroup = document.getElementById("m3SeedControlGroup");
+
+    // --- ГЕНЕРАЦИЯ HTML ДЛЯ КАРТОЧКИ УРОКА ---
+    function renderLessonCard(l) {
+      let hwHtml = '';
+      if (l.hw) {
+        let photosHtml = '';
+        if (l.photos === 1) photosHtml = `<div class="hw-photos-row"><div class="photo-thumb p1">IMG</div></div>`;
+        if (l.photos === 2) photosHtml = `<div class="hw-photos-row"><div class="photo-thumb p1">IMG</div><div class="photo-thumb p2">IMG</div></div>`;
+
+        hwHtml = `
+          <div class="homework-box" onclick="openScreen('sheet-homework')">
+            <div class="hw-head-row">
+              <div class="hw-checkbox ${l.done ? 'checked' : ''}"></div>
+              <span class="hw-text">${l.hw}</span>
+            </div>
+            ${photosHtml}
+          </div>
+        `;
+      }
+
+      return `
+        <article class="lesson-card" onclick="openScreen('sheet-lesson')">
+          <div class="lesson-main-row">
+            <div class="lesson-meta">
+              <div class="lesson-number">${l.num}</div>
+              <div class="lesson-info">
+                <div class="subj-title">${l.name}</div>
+                <div class="subj-time">${l.time}</div>
+              </div>
+            </div>
+            ${l.room ? `<div class="room-badge">${l.room}</div>` : ''}
+          </div>
+          ${hwHtml}
+        </article>
+      `;
+    }
+
+    // --- ШАБЛОНЫ 11 ЭКРАНОВ ---
+    function renderScreen(screenId) {
+      closeAllOverlays();
+
+      // Управление заголовками и видимостью селектора недели
+      if (screenId === "diary" || screenId === "sheet-lesson" || screenId === "sheet-homework" || screenId === "sheet-import" || screenId === "drawer") {
+        hdrTitle.innerText = "Понедельник, 7 сент.";
+        hdrSub.innerText = "2-я неделя";
+        weekStrip.style.display = "flex";
+        selectWeekStripDay("mon");
+        setActiveTabs("diary");
+      } else if (screenId === "diary-empty") {
+        hdrTitle.innerText = "Вторник, 8 сент.";
+        hdrSub.innerText = "2-я неделя";
+        weekStrip.style.display = "flex";
+        selectWeekStripDay("tue");
+        setActiveTabs("diary");
+      } else if (screenId === "now-lesson" || screenId === "now-break") {
+        hdrTitle.innerText = "Сейчас";
+        hdrSub.innerText = "Понедельник, 7 сент.";
+        weekStrip.style.display = "none";
+        setActiveTabs("now");
+      } else if (screenId === "tasks") {
+        hdrTitle.innerText = "Задания";
+        hdrSub.innerText = "3 не выполнено";
+        weekStrip.style.display = "none";
+        setActiveTabs("tasks");
+      } else if (screenId === "bells-quick" || screenId === "bells-days") {
+        hdrTitle.innerText = "Звонки";
+        hdrSub.innerText = "Расписание уроков";
+        weekStrip.style.display = "none";
+      }
+
+      // Генерация содержимого экрана
+      switch (screenId) {
+        case "diary":
+          contentArea.innerHTML = DEMO_MONDAY_LESSONS.map(renderLessonCard).join("");
+          break;
+
+        case "diary-empty":
+          contentArea.innerHTML = `
+            <div class="empty-center-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.4;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              <div class="empty-title">Нет уроков</div>
+              <p style="font-size:13px; opacity:0.7; max-width:220px;">На вторник расписание уроков ещё не заполнено</p>
+              <button class="btn-center-add" onclick="openScreen('sheet-lesson')">+ Добавить урок</button>
+            </div>
+          `;
+          break;
+
+        case "now-lesson":
+          contentArea.innerHTML = `
+            <div class="now-hero-card">
+              <span style="font-size:12px; font-weight:700; text-transform:uppercase; opacity:0.8;">Текущий урок</span>
+              <div class="now-hero-title">Урок 3 · Физика</div>
+              <div style="font-size:13px; opacity:0.9;">10:25 – 11:10 • каб. 108</div>
+              <div class="now-timer-val">до звонка 00:30:00</div>
+              <div class="now-subtext">до конца дня 3 ч 15 мин</div>
+            </div>
+            <div class="section-label">Оставшиеся уроки сегодня</div>
+            ${DEMO_MONDAY_LESSONS.slice(2).map(renderLessonCard).join("")}
+          `;
+          break;
+
+        case "now-break":
+          contentArea.innerHTML = `
+            <div class="now-hero-card">
+              <span style="font-size:12px; font-weight:700; text-transform:uppercase; opacity:0.8;">Перемена</span>
+              <div class="now-hero-title">Перемена</div>
+              <div class="now-timer-val">до звонка 8 мин</div>
+              <div class="now-subtext">Следующий: Урок 4 · История (11:30, каб. 412)</div>
+            </div>
+            <div class="section-label">Оставшиеся уроки сегодня</div>
+            ${DEMO_MONDAY_LESSONS.slice(3).map(renderLessonCard).join("")}
+          `;
+          break;
+
+        case "tasks":
+          contentArea.innerHTML = `
+            <div class="tasks-filter-strip">
+              <div class="task-chip active">Не сделано (3)</div>
+              <div class="task-chip">Сделано (3)</div>
+              <div class="task-chip">Все (6)</div>
+            </div>
+            <article class="lesson-card" onclick="openScreen('sheet-homework')">
+              <div class="lesson-main-row">
+                <div class="lesson-info">
+                  <div class="subj-title">Русский язык</div>
+                  <div class="subj-time">Срок: Пн, 7 сент.</div>
+                </div>
+              </div>
+              <div class="homework-box">
+                <div class="hw-head-row">
+                  <div class="hw-checkbox"></div>
+                  <span class="hw-text">Упр. 84, выучить правило на стр. 52 (орфограмма № 14)</span>
+                </div>
+              </div>
+            </article>
+            <article class="lesson-card" onclick="openScreen('sheet-homework')">
+              <div class="lesson-main-row">
+                <div class="lesson-info">
+                  <div class="subj-title">Английский язык</div>
+                  <div class="subj-time">Срок: Пн, 7 сент.</div>
+                </div>
+              </div>
+              <div class="homework-box">
+                <div class="hw-head-row">
+                  <div class="hw-checkbox"></div>
+                  <span class="hw-text">Workbook: p. 24, ex. 1, 2, 3; выучить слова Module 2B</span>
+                </div>
+                <div class="hw-photos-row"><div class="photo-thumb p1">IMG</div></div>
+              </div>
+            </article>
+            <article class="lesson-card" onclick="openScreen('sheet-homework')">
+              <div class="lesson-main-row">
+                <div class="lesson-info">
+                  <div class="subj-title">Геометрия</div>
+                  <div class="subj-time">Срок: Вт, 8 сент.</div>
+                </div>
+              </div>
+              <div class="homework-box">
+                <div class="hw-head-row">
+                  <div class="hw-checkbox"></div>
+                  <span class="hw-text">Теорема Пифагора: решить № 210, подготовить чертёж</span>
+                </div>
+              </div>
+            </article>
+          `;
+          break;
+
+        case "bells-quick":
+          contentArea.innerHTML = `
+            <div class="lesson-card" style="padding:18px;">
+              <h3 style="font-size:18px; margin-bottom:6px;">Экспресс-настройка</h3>
+              <p style="font-size:12.5px; opacity:0.8; line-height:17px; margin-bottom:14px;">
+                Расписание применяется ко всей неделе. Любой день можно настроить отдельно в звонках по дням.
+              </p>
+              <div class="form-field-group" style="margin-bottom:12px;">
+                <label class="field-label">Длительность урока</label>
+                <input type="text" class="sheet-input" value="45 минут">
+              </div>
+              <div class="form-field-group" style="margin-bottom:12px;">
+                <label class="field-label">Обычная перемена</label>
+                <input type="text" class="sheet-input" value="10 минут">
+              </div>
+              <div class="form-field-group" style="margin-bottom:16px;">
+                <label class="field-label">Другие перемены</label>
+                <input type="text" class="sheet-input" value="После 2: 15 мин; После 3: 20 мин">
+              </div>
+              <button class="sheet-btn primary" onclick="openScreen('diary')">Готово</button>
+            </div>
+          `;
+          break;
+
+        case "bells-days":
+          contentArea.innerHTML = `
+            <div style="display:flex; gap:6px; margin-bottom:10px;">
+              <div class="task-chip active" style="flex:1; text-align:center;">ПН</div>
+              <div class="task-chip" style="flex:1; text-align:center;">ВТ</div>
+              <div class="task-chip" style="flex:1; text-align:center;">СР</div>
+              <div class="task-chip" style="flex:1; text-align:center;">ЧТ</div>
+              <div class="task-chip" style="flex:1; text-align:center;">ПТ</div>
+              <div class="task-chip" style="flex:1; text-align:center;">СБ</div>
+            </div>
+            ${[
+              "1 урок: 08:30 – 09:15",
+              "2 урок: 09:25 – 10:10",
+              "3 урок: 10:25 – 11:10",
+              "4 урок: 11:30 – 12:15",
+              "5 урок: 12:35 – 13:20",
+              "6 урок: 13:30 – 14:15",
+              "7 урок: 14:25 – 15:10",
+              "8 урок: 15:20 – 16:05"
+            ].map(s => `
+              <div class="lesson-card" style="padding:12px 16px; flex-direction:row; justify-content:space-between; align-items:center;">
+                <span style="font-weight:600; font-size:14px;">${s.split(':')[0]}</span>
+                <span style="font-size:14px; opacity:0.8;">${s.split(':')[1]}</span>
+              </div>
+            `).join("")}
+          `;
+          break;
+
+        // Экраны оверлеев: отображают основной список уроков и вызывают соответствующий лист поверх
+        case "drawer":
+          contentArea.innerHTML = DEMO_MONDAY_LESSONS.map(renderLessonCard).join("");
+          showOverlay(drawerPanel);
+          break;
+
+        case "sheet-lesson":
+          contentArea.innerHTML = DEMO_MONDAY_LESSONS.map(renderLessonCard).join("");
+          showOverlay(sheetLesson);
+          break;
+
+        case "sheet-homework":
+          contentArea.innerHTML = DEMO_MONDAY_LESSONS.map(renderLessonCard).join("");
+          showOverlay(sheetHomework);
+          break;
+
+        case "sheet-import":
+          contentArea.innerHTML = DEMO_MONDAY_LESSONS.map(renderLessonCard).join("");
+          showOverlay(sheetImport);
+          break;
+      }
+    }
+
+    // --- ОВЕРЛЕИ (DRAWER / BOTTOM SHEETS) ---
+    function showOverlay(panelEl) {
+      overlayScrim.classList.add("visible");
+      panelEl.classList.add("visible");
+    }
+
+    function closeAllOverlays() {
+      overlayScrim.classList.remove("visible");
+      drawerPanel.classList.remove("visible");
+      sheetLesson.classList.remove("visible");
+      sheetHomework.classList.remove("visible");
+      sheetImport.classList.remove("visible");
+    }
+
+    overlayScrim.addEventListener("click", () => {
+      closeAllOverlays();
+      openScreen("diary");
+    });
+
+    document.getElementById("btnCloseDrawer").addEventListener("click", () => {
+      closeAllOverlays();
+      openScreen("diary");
+    });
+
+    // --- СИНХРОНИЗАЦИЯ ТАБОВ И ДНЕЙ ---
+    function selectWeekStripDay(dayKey) {
+      document.querySelectorAll(".day-item").forEach(el => {
+        el.classList.toggle("selected", el.getAttribute("data-day") === dayKey);
+      });
+    }
+
+    function setActiveTabs(tabKey) {
+      document.querySelectorAll(".m3-nav-item").forEach(el => {
+        el.classList.toggle("active", el.getAttribute("data-tab") === tabKey);
+      });
+      document.querySelectorAll(".glass-tab-item").forEach(el => {
+        el.classList.toggle("active", el.getAttribute("data-tab") === tabKey);
+      });
+    }
+
+    function openScreen(screenId) {
+      state.currentScreen = screenId;
+      document.querySelectorAll(".screen-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-screen") === screenId);
+      });
+      renderScreen(screenId);
+    }
+
+    // --- СИСТЕМА ДИНАМИЧЕСКИХ SEED-ЦВЕТОВ M3 ---
+    function applyM3Seed(seedName) {
+      state.seed = seedName;
+      const isDark = state.theme === "dark";
+      const s = phoneCanvas.style;
+
+      if (!isDark) {
+        s.setProperty("--m3-primary", `var(--m3-seed-${seedName}-primary)`);
+        s.setProperty("--m3-primary-container", `var(--m3-seed-${seedName}-pc)`);
+        s.setProperty("--m3-on-primary-container", `var(--m3-seed-${seedName}-on-pc)`);
+        s.setProperty("--m3-secondary-container", `var(--m3-seed-${seedName}-sc)`);
+        s.setProperty("--m3-on-secondary-container", `var(--m3-seed-${seedName}-on-sc)`);
+      } else {
+        s.setProperty("--m3-primary", `var(--m3-seed-${seedName}-primary-dark)`);
+        s.setProperty("--m3-primary-container", `var(--m3-seed-${seedName}-pc-dark)`);
+        s.setProperty("--m3-on-primary-container", `var(--m3-seed-${seedName}-on-pc-dark)`);
+        s.setProperty("--m3-secondary-container", `var(--m3-seed-${seedName}-sc-dark)`);
+        s.setProperty("--m3-on-secondary-container", `var(--m3-seed-${seedName}-on-sc-dark)`);
+      }
+
+      document.querySelectorAll(".seed-dot").forEach(d => {
+        d.classList.toggle("active", d.getAttribute("data-seed") === seedName);
+      });
+    }
+
+    // --- ОБРАБОТЧИКИ СОБЫТИЙ ВНЕШНЕЙ ПАНЕЛИ УПРАВЛЕНИЯ ---
+    // 1. Стиль
+    document.querySelectorAll("[data-set-style]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const style = btn.getAttribute("data-set-style");
+        state.style = style;
+        document.querySelectorAll("[data-set-style]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        phoneCanvas.setAttribute("data-style", style);
+        document.body.setAttribute("data-style", style);
+        m3SeedGroup.style.opacity = style === "md3" ? "1" : "0.35";
+        m3SeedGroup.style.pointerEvents = style === "md3" ? "auto" : "none";
+        document.getElementById("drwStyleVal").innerText = style === "md3" ? "Material 3" : "Liquid Glass";
+      });
+    });
+
+    // 2. Тема
+    document.querySelectorAll("[data-set-theme]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const theme = btn.getAttribute("data-set-theme");
+        state.theme = theme;
+        document.querySelectorAll("[data-set-theme]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        phoneCanvas.setAttribute("data-theme", theme);
+        document.body.setAttribute("data-theme", theme);
+        document.getElementById("drwThemeVal").innerText = theme === "light" ? "Light" : "Dark";
+        applyM3Seed(state.seed);
+      });
+    });
+
+    // 3. Семена M3
+    document.querySelectorAll(".seed-dot").forEach(dot => {
+      dot.addEventListener("click", () => {
+        applyM3Seed(dot.getAttribute("data-seed"));
+      });
+    });
+
+    // 4. Список экранов
+    document.querySelectorAll(".screen-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        openScreen(btn.getAttribute("data-screen"));
+      });
+    });
+
+    // --- ИНТЕРАКТИВНЫЕ ДЕЙСТВИЯ ВНУТРИ ТЕЛЕФОНА ---
+    // Клики по вкладкам (M3 + Glass)
+    document.querySelectorAll("[data-tab]").forEach(tab => {
+      tab.addEventListener("click", () => {
+        const t = tab.getAttribute("data-tab");
+        if (t === "diary") openScreen("diary");
+        if (t === "now") openScreen("now-lesson");
+        if (t === "tasks") openScreen("tasks");
+      });
+    });
+
+    // Клики по дням недели
+    document.querySelectorAll(".day-item").forEach(d => {
+      d.addEventListener("click", () => {
+        const day = d.getAttribute("data-day");
+        if (day === "tue") openScreen("diary-empty");
+        else openScreen("diary");
+      });
+    });
+
+    // Открытие Drawer по гамбургеру
+    document.getElementById("btnHamburger").addEventListener("click", () => {
+      openScreen("drawer");
+    });
+
+    // Кнопки добавления урока (FAB и Liquid Glass капсула)
+    document.getElementById("btnMd3Fab").addEventListener("click", () => openScreen("sheet-lesson"));
+    document.getElementById("btnGlassAdd").addEventListener("click", () => openScreen("sheet-lesson"));
+
+    // Переходы из Drawer
+    document.getElementById("drwBellsNav").addEventListener("click", () => openScreen("bells-days"));
+    document.getElementById("drwImportNav").addEventListener("click", () => openScreen("sheet-import"));
+    document.getElementById("drwStyleToggle").addEventListener("click", () => {
+      const nextStyle = state.style === "md3" ? "glass" : "md3";
+      document.querySelector(`[data-set-style="${nextStyle}"]`).click();
+    });
+    document.getElementById("drwThemeToggle").addEventListener("click", () => {
+      const nextTheme = state.theme === "light" ? "dark" : "light";
+      document.querySelector(`[data-set-theme="${nextTheme}"]`).click();
+    });
+
+    // Кнопки сохранения/отмены в Sheets
+    ["btnSaveLesson", "btnDeleteLesson", "btnSaveHw", "btnClearHw", "btnDoImport", "btnCancelImport"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("click", () => openScreen("diary"));
+    });
+
+    // Инициализация стартового экрана
+    applyM3Seed("indigo");
+    renderScreen("diary");
+  </script>
+</body>
+</html>

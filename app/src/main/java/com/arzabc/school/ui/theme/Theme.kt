@@ -5,17 +5,12 @@ import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -23,153 +18,93 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.arzabc.school.R
 
-enum class ThemeMode(val prefValue: String, @StringRes val titleRes: Int) {
-    Cover("cover", R.string.theme_cover),
-    System("system", R.string.theme_system),
-    Dark("dark", R.string.theme_dark),
+enum class UiStyle(val prefValue: String, @StringRes val titleRes: Int) {
+    Material("material", R.string.theme_material),
+    Glass("glass", R.string.theme_glass),
     ;
 
     companion object {
-        fun fromPref(value: String?): ThemeMode =
-            entries.find { it.prefValue == value } ?: Cover
+        fun fromPref(value: String?): UiStyle =
+            entries.find { it.prefValue == value } ?: Material
     }
 }
 
-@Immutable
-data class DiaryPalette(
-    val cover: Color,
-    val coverDeep: Color,
-    val gold: Color,
-    val onGold: Color,
-    val paper: Color,
-    val paperLine: Color,
-    val ink: Color,
-    val faintInk: Color,
-    val marginRed: Color,
-    val homeworkInk: Color,
-    val darkChrome: Boolean,
-)
+enum class ThemeBrightness(val prefValue: String, @StringRes val titleRes: Int) {
+    Light("light", R.string.theme_light),
+    Dark("dark", R.string.theme_dark),
+    System("system", R.string.theme_follow_system),
+    ;
 
-val CoverPalette = DiaryPalette(
-    cover = CoverBurgundy,
-    coverDeep = CoverDeep,
-    gold = CoverGold,
-    onGold = CoverDeep,
-    paper = Paper,
-    paperLine = PaperLine,
-    ink = Ink,
-    faintInk = FaintInk,
-    marginRed = MarginRed,
-    homeworkInk = HomeworkInk,
-    darkChrome = true,
-)
-
-/** Ночь: та же тетрадь, темнее кожа обложки, бумага чуть приглушена — не инверсия. */
-val NightPalette = DiaryPalette(
-    cover = NightCover,
-    coverDeep = NightCoverDeep,
-    gold = NightGold,
-    onGold = NightCoverDeep,
-    paper = NightPaper,
-    paperLine = NightPaperLine,
-    ink = NightInk,
-    faintInk = NightFaintInk,
-    marginRed = NightMargin,
-    homeworkInk = NightHomework,
-    darkChrome = true,
-)
-
-val LocalDiaryPalette = staticCompositionLocalOf { CoverPalette }
-
-private fun foilOn(cover: Color): Color =
-    if (cover.luminance() > 0.45f) CoverDeep else CoverGold
-
-private fun stainLeather(base: DiaryPalette, stain: Color, amount: Float = 0.28f): DiaryPalette {
-    val cover = lerp(base.cover, stain, amount)
-    val deep = lerp(base.coverDeep, stain, amount * 0.85f)
-    val gold = foilOn(cover)
-    return base.copy(
-        cover = cover,
-        coverDeep = deep,
-        gold = gold,
-        onGold = if (gold.luminance() > 0.5f) deep else CoverGold,
-        darkChrome = cover.luminance() < 0.45f,
-    )
+    companion object {
+        fun fromPref(value: String?): ThemeBrightness =
+            entries.find { it.prefValue == value } ?: Light
+    }
 }
 
-private fun materialFor(palette: DiaryPalette) = if (palette.paper.luminance() < 0.4f) {
-    darkColorScheme(
-        primary = palette.cover,
-        onPrimary = palette.gold,
-        secondary = palette.homeworkInk,
-        onSecondary = palette.paper,
-        background = palette.cover,
-        onBackground = palette.gold,
-        surface = palette.paper,
-        onSurface = palette.ink,
-        surfaceVariant = palette.paper,
-        onSurfaceVariant = palette.faintInk,
-        outline = palette.paperLine,
-        error = palette.marginRed,
-        onError = palette.paper,
-    )
-} else {
-    lightColorScheme(
-        primary = palette.cover,
-        onPrimary = palette.gold,
-        secondary = palette.homeworkInk,
-        onSecondary = Color.White,
-        background = palette.cover,
-        onBackground = palette.gold,
-        surface = palette.paper,
-        onSurface = palette.ink,
-        surfaceVariant = Color(0xFFE9E0C8),
-        onSurfaceVariant = palette.faintInk,
-        outline = palette.paperLine,
-        error = palette.marginRed,
-        onError = Color.White,
-    )
-}
+data class Appearance(
+    val style: UiStyle = UiStyle.Material,
+    val brightness: ThemeBrightness = ThemeBrightness.Light,
+    val seed: ColorSeed = ColorSeed.Indigo,
+)
+
+val LocalUiStyle = staticCompositionLocalOf { UiStyle.Material }
+val LocalGlassTokens = staticCompositionLocalOf { GlassLight }
 
 @Composable
 fun DiaryTheme(
-    mode: ThemeMode,
+    appearance: Appearance,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
-    val palette = when (mode) {
-        ThemeMode.Cover -> CoverPalette
-        ThemeMode.Dark -> NightPalette
-        ThemeMode.System -> {
-            val notebook = if (systemDark) NightPalette else CoverPalette
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val dynamic = if (systemDark) {
-                    dynamicDarkColorScheme(context)
-                } else {
-                    dynamicLightColorScheme(context)
-                }
-                stainLeather(notebook, dynamic.primary)
-            } else {
-                notebook
-            }
-        }
+    val dark = when (appearance.brightness) {
+        ThemeBrightness.Light -> false
+        ThemeBrightness.Dark -> true
+        ThemeBrightness.System -> systemDark
+    }
+    val glass = appearance.style == UiStyle.Glass
+    val glassTokens = if (dark) GlassDark else GlassLight
+    val scheme = if (!glass &&
+        appearance.seed == ColorSeed.Wallpaper &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    ) {
+        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        seedColorScheme(
+            seed = if (glass) ColorSeed.Indigo else appearance.seed,
+            dark = dark,
+        )
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
+        val statusDarkIcons = scheme.surface.luminance() > 0.45f
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = palette.coverDeep.toArgb()
-            window.navigationBarColor = palette.coverDeep.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
-                !palette.darkChrome
+            val bar = if (glass) {
+                android.graphics.Color.TRANSPARENT
+            } else {
+                scheme.surface.toArgb()
+            }
+            window.statusBarColor = bar
+            window.navigationBarColor = if (glass) {
+                android.graphics.Color.TRANSPARENT
+            } else {
+                scheme.surfaceContainer.toArgb()
+            }
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = statusDarkIcons
+                isAppearanceLightNavigationBars = statusDarkIcons
+            }
         }
     }
 
-    CompositionLocalProvider(LocalDiaryPalette provides palette) {
+    CompositionLocalProvider(
+        LocalUiStyle provides appearance.style,
+        LocalGlassTokens provides glassTokens,
+    ) {
         MaterialTheme(
-            colorScheme = materialFor(palette),
+            colorScheme = scheme,
             typography = Typography,
             content = content,
         )
