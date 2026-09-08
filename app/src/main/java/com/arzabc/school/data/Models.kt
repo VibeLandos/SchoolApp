@@ -29,6 +29,7 @@ data class Homework(
     val period: Int,
     val description: String,
     val isDone: Boolean = false,
+    val subject: String = "",
 )
 
 @Entity(

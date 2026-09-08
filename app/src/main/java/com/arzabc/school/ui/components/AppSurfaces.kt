@@ -3,13 +3,17 @@ package com.arzabc.school.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,10 +42,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.arzabc.school.R
+import com.arzabc.school.data.Dates
+import java.time.LocalDate
 import com.arzabc.school.ui.theme.ColorSeed
 import com.arzabc.school.ui.theme.LocalGlassTokens
 import com.arzabc.school.ui.theme.LocalUiStyle
@@ -99,10 +107,135 @@ fun ScreenHeader(
 }
 
 @Composable
+fun CenteredChoiceDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(if (glass) 28.dp else 24.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (glass) {
+                        Modifier.glassSurface(tokens, 28.dp)
+                    } else {
+                        Modifier
+                            .clip(shape)
+                            .background(scheme.surfaceContainerHigh, shape)
+                    },
+                )
+                .padding(horizontal = 24.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold,
+                color = if (glass) tokens.text else scheme.onSurface,
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    textAlign = TextAlign.Center,
+                    color = if (glass) tokens.textSecondary else scheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+fun WeekDayChips(
+    selectedDate: LocalDate,
+    weekDates: List<LocalDate>,
+    today: LocalDate,
+    onSelectDate: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    showDate: Boolean = false,
+) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        weekDates.forEach { date ->
+            val selected = date == selectedDate
+            val shape = RoundedCornerShape(if (glass) 14.dp else 12.dp)
+            val bg = when {
+                selected && glass && tokens.darkChrome -> Color.White.copy(alpha = 0.22f)
+                selected && glass -> Color.White.copy(alpha = 0.92f)
+                selected -> scheme.secondaryContainer
+                glass -> tokens.subtle
+                else -> scheme.surfaceContainerLow
+            }
+            val fg = when {
+                selected && glass && tokens.darkChrome -> Color.White
+                selected && glass -> Color(0xFF111111)
+                selected -> scheme.onSecondaryContainer
+                glass -> tokens.textSecondary
+                else -> scheme.onSurfaceVariant
+            }
+            val todayChip = date == today
+            val accent = if (glass) tokens.accent else scheme.primary
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(if (showDate) 52.dp else 40.dp)
+                    .clip(shape)
+                    .background(bg)
+                    .border(
+                        1.dp,
+                        when {
+                            selected && !glass -> scheme.primary
+                            glass -> tokens.border
+                            else -> scheme.outlineVariant
+                        },
+                        shape,
+                    )
+                    .clickable { onSelectDate(date) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = Dates.weekdayShort(date).uppercase(),
+                    color = if (todayChip && !selected) accent else fg,
+                    fontSize = if (showDate) 11.sp else 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (showDate) {
+                    Text(
+                        text = date.dayOfMonth.toString(),
+                        color = if (todayChip && !selected) accent else fg,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 fun DiaryCard(
     modifier: Modifier = Modifier,
     highlighted: Boolean = false,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val glass = isGlassStyle()
@@ -130,7 +263,16 @@ fun DiaryCard(
             .clip(shape)
             .background(bg, shape)
             .then(if (glass || highlighted) Modifier.border(1.dp, border, shape) else Modifier)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                when {
+                    onLongClick != null -> Modifier.combinedClickable(
+                        onClick = { onClick?.invoke() },
+                        onLongClick = onLongClick,
+                    )
+                    onClick != null -> Modifier.clickable(onClick = onClick)
+                    else -> Modifier
+                },
+            )
             .padding(14.dp),
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,10 @@ import com.arzabc.school.data.Homework
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.SchoolCatalog
 import com.arzabc.school.ui.components.AppUpdateDialog
+import com.arzabc.school.ui.components.CenteredChoiceDialog
 import com.arzabc.school.ui.components.EditHomeworkSheet
+import com.arzabc.school.ui.components.PickHomeworkDateSheet
+import com.arzabc.school.ui.components.PickTaskSubjectSheet
 import com.arzabc.school.ui.components.EditLessonSheet
 import com.arzabc.school.ui.components.ImportScheduleSheet
 import com.arzabc.school.ui.components.isGlassStyle
@@ -108,7 +112,12 @@ private sealed interface Editor {
         val period: Int,
         val lesson: Lesson?,
         val existing: Homework?,
+        val customSubject: String = "",
     ) : Editor
+
+    data class HomeworkDatePick(val lesson: Lesson) : Editor
+    data class HomeworkAddChoice(val date: LocalDate) : Editor
+    data class HomeworkSubjectPick(val date: LocalDate) : Editor
 
     data object Bells : Editor
     data object Import : Editor
@@ -169,6 +178,36 @@ fun SchoolApp(
         editor = Editor.LessonSlot(date, SchoolCatalog.nextFreePeriod(used), null)
     }
 
+    fun openHomeworkDates(lesson: Lesson) {
+        editor = Editor.HomeworkDatePick(lesson)
+    }
+
+    fun openHomeworkFor(lesson: Lesson, date: LocalDate) {
+        val existing = ui.homework.find {
+            it.epochDay == date.toEpochDay() && it.period == lesson.period
+        }
+        editor = Editor.HomeworkSlot(date, lesson.period, lesson, existing)
+    }
+
+    fun openHomework(homework: Homework) {
+        val date = LocalDate.ofEpochDay(homework.epochDay)
+        val lesson = if (homework.subject.isNotBlank()) {
+            null
+        } else {
+            ui.lessons.find {
+                it.dayOfWeek == Dates.schoolDayOfWeek(date) && it.period == homework.period
+            }
+        }
+        editor = Editor.HomeworkSlot(date, homework.period, lesson, homework)
+    }
+
+    fun nextHomeworkPeriod(date: LocalDate): Int {
+        val day = Dates.schoolDayOfWeek(date)
+        val used = ui.lessons.filter { it.dayOfWeek == day }.map { it.period }.toSet() +
+            ui.homework.filter { it.epochDay == date.toEpochDay() }.map { it.period }.toSet()
+        return SchoolCatalog.nextFreePeriod(used)
+    }
+
     BackHandler(enabled = drawerShowing) { closeMenu() }
 
     Box(Modifier.fillMaxSize()) {
@@ -226,9 +265,16 @@ fun SchoolApp(
                 modifier = Modifier.fillMaxSize(),
                 containerColor = if (glass) Color.Transparent else MaterialTheme.colorScheme.surface,
                 floatingActionButton = {
-                    if (!glass && route == Routes.Diary) {
-                        FloatingActionButton(onClick = ::addLessonForSelected) {
-                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_lesson))
+                    if (!glass) {
+                        when (route) {
+                            Routes.Diary -> FloatingActionButton(onClick = ::addLessonForSelected) {
+                                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_lesson))
+                            }
+                            Routes.Tasks -> FloatingActionButton(
+                                onClick = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
+                            ) {
+                                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_homework))
+                            }
                         }
                     }
                 },
@@ -262,19 +308,13 @@ fun SchoolApp(
                             selectedDate = ui.selectedDate,
                             weekDates = ui.weekDates,
                             lessons = ui.lessons,
-                            homework = ui.homework,
-                            photos = ui.photos,
                             weekBells = ui.weekBells,
                             schoolDays = ui.schoolDays,
                             onSelectDate = viewModel::selectDate,
-                            onShiftWeek = viewModel::shiftWeek,
-                            onSubjectClick = { date, period, lesson ->
+                            onEditLesson = { date, period, lesson ->
                                 editor = Editor.LessonSlot(date, period, lesson)
                             },
-                            onHomeworkClick = { date, period, lesson, homework ->
-                                editor = Editor.HomeworkSlot(date, period, lesson, homework)
-                            },
-                            onToggleHomework = viewModel::toggleHomework,
+                            onAddHomework = ::openHomeworkDates,
                             onAddLesson = { date ->
                                 val used = ui.lessons
                                     .filter { it.dayOfWeek == Dates.schoolDayOfWeek(date) }
@@ -301,14 +341,17 @@ fun SchoolApp(
                     }
                     composable(Routes.Tasks) {
                         HomeworkListScreen(
+                            selectedDate = ui.taskDate,
+                            weekDates = ui.taskWeekDates,
+                            schoolDays = ui.schoolDays,
                             lessons = ui.lessons,
                             homework = ui.homework,
                             photos = ui.photos,
-                            onOpenDate = { date ->
-                                viewModel.selectDate(date)
-                                go(Routes.Diary)
-                            },
+                            onSelectDate = viewModel::selectTaskDate,
+                            onShiftWeek = viewModel::shiftTaskWeek,
+                            onOpenHomework = ::openHomework,
                             onToggle = viewModel::toggleHomework,
+                            onAddHomework = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
                             onOpenMenu = openMenu,
                         )
                     }
@@ -325,10 +368,19 @@ fun SchoolApp(
                 ) {
                     if (route == Routes.Diary) {
                         GlassAddPill(
+                            label = stringResource(R.string.add_lesson),
                             modifier = Modifier
                                 .align(Alignment.End)
                                 .padding(end = 18.dp, bottom = 12.dp),
                             onClick = ::addLessonForSelected,
+                        )
+                    } else if (route == Routes.Tasks) {
+                        GlassAddPill(
+                            label = stringResource(R.string.add_homework),
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(end = 18.dp, bottom = 12.dp),
+                            onClick = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
                         )
                     }
                     GlassTabBar(
@@ -369,23 +421,67 @@ fun SchoolApp(
                 existing = current.existing,
                 existingPhotos = ui.photos.filter { it.homeworkId == current.existing?.id },
                 photoFile = viewModel::photoFile,
+                customSubject = current.customSubject,
                 onDismiss = { editor = null },
-                onSave = { homework, subjectIfNeeded, keepFileNames, newUris ->
+                onSave = { homework, keepFileNames, newUris ->
                     viewModel.saveHomework(homework, keepFileNames, newUris)
-                    if (current.lesson == null && subjectIfNeeded.isNotBlank()) {
-                        val slot = ui.weekBells.forDay(Dates.schoolDayOfWeek(current.date)).of(current.period)
-                        viewModel.saveLesson(
-                            Lesson(
-                                dayOfWeek = Dates.schoolDayOfWeek(current.date),
-                                period = current.period,
-                                subject = subjectIfNeeded,
-                                startTime = slot.start,
-                                endTime = slot.end,
-                            ),
-                        )
-                    }
                 },
                 onDelete = viewModel::deleteHomework,
+            )
+            is Editor.HomeworkDatePick -> {
+                val lesson = current.lesson
+                PickHomeworkDateSheet(
+                    subject = lesson.subject,
+                    period = lesson.period,
+                    dates = Dates.datesForHomeworkPick(lesson.dayOfWeek),
+                    markedEpochDays = ui.homework
+                        .filter { hw ->
+                            hw.period == lesson.period &&
+                                LocalDate.ofEpochDay(hw.epochDay).dayOfWeek.value == lesson.dayOfWeek
+                        }
+                        .map { it.epochDay }
+                        .toSet(),
+                    onPick = { date -> openHomeworkFor(lesson, date) },
+                    onDismiss = { editor = null },
+                )
+            }
+            is Editor.HomeworkAddChoice -> CenteredChoiceDialog(
+                title = stringResource(R.string.add_homework),
+                subtitle = stringResource(
+                    R.string.date_with_weekday,
+                    Dates.weekdayName(current.date),
+                    Dates.formatFull(current.date),
+                ),
+                onDismiss = { editor = null },
+            ) {
+                FilledTonalButton(
+                    onClick = { editor = Editor.HomeworkSubjectPick(current.date) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.pick_hw_from_schedule))
+                }
+                Spacer(Modifier.size(8.dp))
+                FilledTonalButton(
+                    onClick = {
+                        editor = Editor.HomeworkSlot(
+                            date = current.date,
+                            period = nextHomeworkPeriod(current.date),
+                            lesson = null,
+                            existing = null,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.pick_hw_type_name))
+                }
+            }
+            is Editor.HomeworkSubjectPick -> PickTaskSubjectSheet(
+                date = current.date,
+                lessons = ui.lessons.filter {
+                    it.dayOfWeek == Dates.schoolDayOfWeek(current.date)
+                },
+                onPickLesson = { lesson -> openHomeworkFor(lesson, current.date) },
+                onDismiss = { editor = null },
             )
             Editor.Bells -> BellScheduleSheet(
                 weekBells = ui.weekBells,
@@ -525,7 +621,7 @@ private fun GlassTab(
 }
 
 @Composable
-private fun GlassAddPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun GlassAddPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val tokens = LocalGlassTokens.current
     Row(
         modifier
@@ -543,7 +639,7 @@ private fun GlassAddPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
             Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
         }
         Text(
-            text = stringResource(R.string.add_lesson),
+            text = label,
             color = tokens.text,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 8.dp),

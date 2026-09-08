@@ -14,8 +14,8 @@ android {
         applicationId = "com.arzabc.school"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -29,21 +29,30 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            // minSdk 24 otherwise drops v1; some file managers / Play Protect then treat the APK as unsigned.
-            enableV1Signing = true
-            enableV2Signing = true
-            enableV3Signing = true
-        }
         val propsFile = rootProject.file("signing/keystore.properties")
-        if (propsFile.exists()) {
-            create("release") {
-                val props = Properties()
-                propsFile.inputStream().use { props.load(it) }
+        val diaryKey = if (propsFile.exists()) {
+            Properties().also { propsFile.inputStream().use { stream -> it.load(stream) } }
+        } else {
+            null
+        }
+        getByName("debug") {
+            val props = diaryKey
+            if (props != null) {
                 storeFile = rootProject.file(props.getProperty("storeFile"))
                 storePassword = props.getProperty("storePassword")
                 keyAlias = props.getProperty("keyAlias")
                 keyPassword = props.getProperty("keyPassword")
+            }
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+        if (diaryKey != null) {
+            create("release") {
+                storeFile = rootProject.file(diaryKey.getProperty("storeFile"))
+                storePassword = diaryKey.getProperty("storePassword")
+                keyAlias = diaryKey.getProperty("keyAlias")
+                keyPassword = diaryKey.getProperty("keyPassword")
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true

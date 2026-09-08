@@ -1,31 +1,44 @@
 ﻿package com.arzabc.school.ui.homework
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arzabc.school.R
@@ -35,156 +48,238 @@ import com.arzabc.school.data.HomeworkPhoto
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.subjectFor
 import com.arzabc.school.ui.components.DiaryCard
+import com.arzabc.school.ui.components.PeriodBadge
 import com.arzabc.school.ui.components.ScreenHeader
+import com.arzabc.school.ui.components.WeekDayChips
 import com.arzabc.school.ui.components.isGlassStyle
 import com.arzabc.school.ui.theme.LocalGlassTokens
 import java.time.LocalDate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
-private enum class TaskFilter { OPEN, DONE, ALL }
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeworkListScreen(
+    selectedDate: LocalDate,
+    weekDates: List<LocalDate>,
+    schoolDays: Int,
     lessons: List<Lesson>,
     homework: List<Homework>,
     photos: List<HomeworkPhoto>,
-    onOpenDate: (LocalDate) -> Unit,
+    onSelectDate: (LocalDate) -> Unit,
+    onShiftWeek: (Long) -> Unit,
+    onOpenHomework: (Homework) -> Unit,
     onToggle: (Homework) -> Unit,
+    onAddHomework: () -> Unit,
     onOpenMenu: () -> Unit,
 ) {
-    var filter by remember { mutableStateOf(TaskFilter.OPEN) }
-    val today = remember { LocalDate.now().toEpochDay() }
-    val openCount = remember(homework) { homework.count { !it.isDone } }
-    val visible = remember(homework, filter) {
-        homework.filter {
-            when (filter) {
-                TaskFilter.OPEN -> !it.isDone
-                TaskFilter.DONE -> it.isDone
-                TaskFilter.ALL -> true
-            }
-        }.sortedWith(compareBy<Homework> { it.isDone }.thenBy { it.epochDay }.thenBy { it.period })
+    val today = remember { LocalDate.now() }
+    val homeworkByDay = remember(homework) { homework.groupBy { it.epochDay } }
+    val photosByHomework = remember(photos) { photos.groupBy { it.homeworkId } }
+    val startPage = Dates.dayIndex(selectedDate, schoolDays)
+    val pagerState = rememberPagerState(
+        initialPage = startPage,
+        pageCount = { weekDates.size.coerceAtLeast(1) },
+    )
+    val pagerScope = rememberCoroutineScope()
+    val weekDatesState = rememberUpdatedState(weekDates)
+    val onSelectDateState = rememberUpdatedState(onSelectDate)
+
+    LaunchedEffect(selectedDate) {
+        val target = Dates.dayIndex(selectedDate, schoolDays)
+        if (pagerState.currentPage != target && !pagerState.isScrollInProgress) {
+            pagerState.scrollToPage(target)
+        }
     }
-    val glass = isGlassStyle()
-    val tokens = LocalGlassTokens.current
-    val muted = if (glass) tokens.textSecondary else MaterialTheme.colorScheme.onSurfaceVariant
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                val date = weekDatesState.value.getOrNull(page) ?: return@collect
+                onSelectDateState.value(date)
+            }
+    }
 
     Column(Modifier.fillMaxSize()) {
         ScreenHeader(
-            title = stringResource(R.string.tasks_title),
-            subtitle = stringResource(R.string.filter_open) + " · $openCount",
+            title = Dates.weekdayName(selectedDate),
+            subtitle = Dates.formatFull(selectedDate),
             onOpenMenu = onOpenMenu,
+            actions = {
+                IconButton(onClick = { onShiftWeek(-1) }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.cd_prev_week),
+                    )
+                }
+                IconButton(onClick = { onShiftWeek(1) }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.cd_next_week),
+                    )
+                }
+            },
         )
-        Row(
-            Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilterChip(
-                selected = filter == TaskFilter.OPEN,
-                onClick = { filter = TaskFilter.OPEN },
-                label = { Text(stringResource(R.string.filter_open)) },
-            )
-            FilterChip(
-                selected = filter == TaskFilter.DONE,
-                onClick = { filter = TaskFilter.DONE },
-                label = { Text(stringResource(R.string.filter_done)) },
-            )
-            FilterChip(
-                selected = filter == TaskFilter.ALL,
-                onClick = { filter = TaskFilter.ALL },
-                label = { Text(stringResource(R.string.filter_all)) },
+        WeekDayChips(
+            selectedDate = selectedDate,
+            weekDates = weekDates,
+            today = today,
+            showDate = true,
+            onSelectDate = { date ->
+                onSelectDate(date)
+                val target = Dates.dayIndex(date, schoolDays)
+                pagerScope.launch { pagerState.animateScrollToPage(target) }
+            },
+        )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            beyondBoundsPageCount = 0,
+        ) { page ->
+            val date = weekDates.getOrNull(page) ?: selectedDate
+            HomeworkDayPage(
+                items = homeworkByDay[date.toEpochDay()].orEmpty().sortedBy { it.period },
+                lessons = lessons,
+                photosByHomework = photosByHomework,
+                onOpenHomework = onOpenHomework,
+                onToggle = onToggle,
+                onAddHomework = onAddHomework,
             )
         }
-        if (visible.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.tasks_empty),
-                    color = muted,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(visible, key = { it.id }) { item ->
-                    val date = LocalDate.ofEpochDay(item.epochDay)
-                    val overdue = !item.isDone && item.epochDay < today
-                    val photoCount = photos.count { it.homeworkId == item.id }
-                    val subject = subjectFor(item, lessons)
-                    val title = if (subject != null) {
-                        stringResource(R.string.task_subject_period, subject, item.period)
-                    } else {
-                        stringResource(R.string.lesson_n, item.period)
-                    }
-                    val dateLine = buildString {
-                        append(Dates.weekdayName(date))
-                        append(", ")
-                        append(Dates.formatFull(date))
-                        if (overdue) {
-                            append(" · ")
-                            append(stringResource(R.string.overdue))
-                        }
-                    }
-                    DiaryCard(onClick = { onOpenDate(date) }) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Top,
-                        ) {
-                            Checkbox(
-                                checked = item.isDone,
-                                onCheckedChange = { onToggle(item) },
-                            )
-                            Column(
-                                Modifier
-                                    .weight(1f)
-                                    .padding(top = 10.dp, end = 8.dp),
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    Text(text = title, style = MaterialTheme.typography.titleMedium)
-                                    Text(text = Dates.formatDayMonth(date), color = muted, fontSize = 11.sp)
-                                }
-                                if (item.description.isNotBlank()) {
-                                    Text(
-                                        text = item.description,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        textDecoration = if (item.isDone) {
-                                            TextDecoration.LineThrough
-                                        } else {
-                                            TextDecoration.None
-                                        },
-                                        modifier = Modifier.padding(top = 4.dp),
-                                    )
-                                }
-                                if (photoCount > 0) {
-                                    Text(
-                                        text = pluralStringResource(R.plurals.photo_count, photoCount, photoCount),
-                                        color = muted,
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(top = 4.dp),
-                                    )
-                                }
-                                Text(
-                                    text = dateLine,
-                                    color = if (overdue) MaterialTheme.colorScheme.error else muted,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
-                        }
+    }
+}
+
+@Composable
+private fun HomeworkDayPage(
+    items: List<Homework>,
+    lessons: List<Lesson>,
+    photosByHomework: Map<Long, List<HomeworkPhoto>>,
+    onOpenHomework: (Homework) -> Unit,
+    onToggle: (Homework) -> Unit,
+    onAddHomework: () -> Unit,
+) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val scheme = MaterialTheme.colorScheme
+    val muted = if (glass) tokens.textSecondary else scheme.onSurfaceVariant
+    val bottomGap = if (glass) 28.dp else 88.dp
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = bottomGap),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (items.isEmpty()) {
+            item {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 48.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(R.string.tasks_empty_day),
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center,
+                        color = if (glass) tokens.text else scheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.tasks_empty_body),
+                        textAlign = TextAlign.Center,
+                        color = muted,
+                        modifier = Modifier.padding(top = 8.dp, start = 24.dp, end = 24.dp),
+                    )
+                    FilledTonalButton(
+                        onClick = onAddHomework,
+                        modifier = Modifier.padding(top = 20.dp),
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(R.string.add_homework))
                     }
                 }
             }
+        } else {
+            items(items, key = { it.id }) { item ->
+                HomeworkCard(
+                    item = item,
+                    subject = subjectFor(item, lessons),
+                    photoCount = photosByHomework[item.id]?.size ?: 0,
+                    onOpen = { onOpenHomework(item) },
+                    onToggle = { onToggle(item) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeworkCard(
+    item: Homework,
+    subject: String?,
+    photoCount: Int,
+    onOpen: () -> Unit,
+    onToggle: () -> Unit,
+) {
+    val glass = isGlassStyle()
+    val tokens = LocalGlassTokens.current
+    val scheme = MaterialTheme.colorScheme
+    val muted = if (glass) tokens.textSecondary else scheme.onSurfaceVariant
+    val title = when {
+        item.subject.isNotBlank() -> item.subject
+        subject != null -> subject
+        else -> stringResource(R.string.lesson_n, item.period)
+    }
+    DiaryCard(onClick = onOpen) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (item.subject.isBlank()) {
+                PeriodBadge(item.period)
+            }
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(start = if (item.subject.isBlank()) 10.dp else 0.dp, end = 4.dp),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (glass) tokens.text else LocalContentColor.current,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (item.description.isNotBlank()) {
+                    Text(
+                        text = item.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = muted,
+                        textDecoration = if (item.isDone) {
+                            TextDecoration.LineThrough
+                        } else {
+                            TextDecoration.None
+                        },
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                if (photoCount > 0) {
+                    Text(
+                        text = pluralStringResource(R.plurals.photo_count, photoCount, photoCount),
+                        color = muted,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+            Checkbox(
+                checked = item.isDone,
+                onCheckedChange = { onToggle() },
+            )
         }
     }
 }

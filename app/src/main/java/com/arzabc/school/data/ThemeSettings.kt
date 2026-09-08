@@ -57,18 +57,18 @@ class ThemeSettings(context: Context) {
         _language.value = language
     }
 
-    fun setWeekBells(value: WeekBells) {
+    fun setWeekBells(value: WeekBells, sync: Boolean = false) {
         prefs.edit()
             .putString(KEY_BELLS, value.week.encode())
             .putString(KEY_BELLS_DAYS, value.encodeDays())
             .putBoolean(KEY_BELLS_SETUP, value.setupDone)
-            .apply()
+            .save(sync)
         _weekBells.value = value
     }
 
-    fun setSchoolDays(days: Int) {
+    fun setSchoolDays(days: Int, sync: Boolean = false) {
         val value = days.coerceIn(5, 6)
-        prefs.edit().putInt(KEY_SCHOOL_DAYS, value).apply()
+        prefs.edit().putInt(KEY_SCHOOL_DAYS, value).save(sync)
         _schoolDays.value = value
     }
 
@@ -143,6 +143,10 @@ class ThemeSettings(context: Context) {
         private const val KEY_SCHOOL_DAYS = "school_days"
         private const val KEY_YEAR_START = "school_year_start"
         private const val KEY_YEAR_END = "school_year_end"
+
+        private fun android.content.SharedPreferences.Editor.save(sync: Boolean) {
+            if (sync) commit() else apply()
+        }
 
         fun wrapContext(base: Context): Context {
             val prefs = base.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

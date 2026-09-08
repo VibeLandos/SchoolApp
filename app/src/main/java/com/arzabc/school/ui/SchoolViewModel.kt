@@ -15,6 +15,8 @@ import com.arzabc.school.data.SchoolYear
 import com.arzabc.school.data.WeekBells
 import java.io.File
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +26,9 @@ import kotlinx.coroutines.launch
 
 data class DiaryUiState(
     val selectedDate: LocalDate = Dates.todaySchoolDate(),
+    val taskDate: LocalDate = Dates.todaySchoolDate(),
     val weekDates: List<LocalDate> = Dates.weekDates(Dates.todaySchoolDate()),
+    val taskWeekDates: List<LocalDate> = Dates.weekDates(Dates.todaySchoolDate()),
     val lessons: List<Lesson> = emptyList(),
     val homework: List<Homework> = emptyList(),
     val photos: List<HomeworkPhoto> = emptyList(),
@@ -37,21 +41,26 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
     private val repository = (application as SchoolApplication).repository
     private val settings = (application as SchoolApplication).themeSettings
     private val selectedDate = MutableStateFlow(Dates.todaySchoolDate(settings.schoolDays.value))
+    private val taskDate = MutableStateFlow(Dates.todaySchoolDate(settings.schoolDays.value))
 
     val uiState: StateFlow<DiaryUiState> = combine(
-        selectedDate,
+        combine(selectedDate, taskDate) { selected, task -> selected to task },
         repository.lessons,
         repository.homework,
         repository.photos,
         combine(settings.weekBells, settings.schoolDays, settings.schoolYear) { bells, days, year ->
             Triple(bells, days, year)
         },
-    ) { date, lessons, homework, photos, settingsSlice ->
+    ) { dates, lessons, homework, photos, settingsSlice ->
+        val (selected, task) = dates
         val (weekBells, schoolDays, schoolYear) = settingsSlice
-        val clamped = Dates.clampToSchoolWeek(date, schoolDays)
+        val clamped = Dates.clampToSchoolWeek(selected, schoolDays)
+        val clampedTask = Dates.clampToSchoolWeek(task, schoolDays)
         DiaryUiState(
             selectedDate = clamped,
+            taskDate = clampedTask,
             weekDates = Dates.weekDates(clamped, schoolDays),
+            taskWeekDates = Dates.weekDates(clampedTask, schoolDays),
             lessons = lessons,
             homework = homework,
             photos = photos,
@@ -61,7 +70,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         )
     }.stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
+        SharingStarted.Eagerly,
         DiaryUiState(),
     )
 
@@ -76,8 +85,14 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         if (selectedDate.value != next) selectedDate.value = next
     }
 
-    fun shiftWeek(weeks: Long) {
-        selectedDate.value = selectedDate.value.plusWeeks(weeks)
+    fun selectTaskDate(date: LocalDate) {
+        val next = Dates.clampToSchoolWeek(date, settings.schoolDays.value)
+        if (taskDate.value != next) taskDate.value = next
+    }
+
+    fun shiftTaskWeek(weeks: Long) {
+        val days = settings.schoolDays.value
+        taskDate.value = Dates.clampToSchoolWeek(taskDate.value.plusWeeks(weeks), days)
     }
 
     fun saveLesson(lesson: Lesson) {
@@ -112,6 +127,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         val value = days.coerceIn(5, 6)
         settings.setSchoolDays(value)
         selectedDate.value = Dates.clampToSchoolWeek(selectedDate.value, value)
+        taskDate.value = Dates.clampToSchoolWeek(taskDate.value, value)
     }
 
     fun setSchoolYear(year: SchoolYear) {
@@ -157,19 +173,23 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
                         endTime = slot.end,
                     )
                 }
-                settings.setWeekBells(state.weekBells.withDay(day, bells))
-                viewModelScope.launch { repository.replaceDayLessons(day, lessons) }
+                settings.setWeekBells(state.weekBells.withDay(day, bells), sync = true)
+                viewModelScope.launch(NonCancellable + Dispatchers.IO) {
+                    repository.replaceDayLessons(day, lessons)
+                }
             }
             is SchedulePayload.Week -> {
                 val payload = parsed.value
-                settings.setSchoolDays(payload.schoolDays)
-                settings.setWeekBells(payload.weekBells)
+                settings.setSchoolDays(payload.schoolDays, sync = true)
+                settings.setWeekBells(payload.weekBells, sync = true)
                 selectedDate.value = Dates.clampToSchoolWeek(state.selectedDate, payload.schoolDays)
                 val lessons = payload.lessons.map { lesson ->
                     val slot = payload.weekBells.forDay(lesson.dayOfWeek).of(lesson.period)
                     lesson.copy(id = 0, startTime = slot.start, endTime = slot.end)
                 }
-                viewModelScope.launch { repository.replaceWeekLessons(lessons) }
+                viewModelScope.launch(NonCancellable + Dispatchers.IO) {
+                    repository.replaceWeekLessons(lessons)
+                }
             }
         }
         return true

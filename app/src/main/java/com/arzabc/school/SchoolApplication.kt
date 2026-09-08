@@ -12,6 +12,7 @@ class SchoolApplication : Application() {
     val repository: SchoolRepository by lazy {
         val db = AppDatabase.create(this)
         SchoolRepository(
+            db,
             db.lessonDao(),
             db.homeworkDao(),
             db.homeworkPhotoDao(),

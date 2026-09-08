@@ -63,9 +63,9 @@ fun EditHomeworkSheet(
     existingPhotos: List<HomeworkPhoto>,
     photoFile: (String) -> File,
     onDismiss: () -> Unit,
+    customSubject: String = "",
     onSave: (
         homework: Homework,
-        subjectIfNeeded: String,
         keepFileNames: List<String>,
         newUris: List<Uri>,
     ) -> Unit,
@@ -73,7 +73,13 @@ fun EditHomeworkSheet(
 ) {
     var description by remember(existing) { mutableStateOf(existing?.description.orEmpty()) }
     var isDone by remember(existing) { mutableStateOf(existing?.isDone ?: false) }
-    var subject by remember(lesson) { mutableStateOf(lesson?.subject.orEmpty()) }
+    var subject by remember(lesson, existing, customSubject) {
+        mutableStateOf(
+            lesson?.subject
+                ?: existing?.subject?.takeIf { it.isNotBlank() }
+                ?: customSubject,
+        )
+    }
     var drafts by remember(existing?.id) {
         mutableStateOf(existingPhotos.map { PhotoDraft.Saved(it.fileName) as PhotoDraft })
     }
@@ -118,10 +124,10 @@ fun EditHomeworkSheet(
                 .padding(bottom = 28.dp),
         ) {
             Text(stringResource(R.string.homework_sheet_title), fontSize = 22.sp)
-            val lessonLine = if (lesson != null) {
-                stringResource(R.string.homework_sheet_subtitle, period, lesson.subject)
-            } else {
-                stringResource(R.string.lesson_n, period)
+            val lessonLine = when {
+                lesson != null -> stringResource(R.string.homework_sheet_subtitle, period, lesson.subject)
+                subject.isNotBlank() -> subject
+                else -> stringResource(R.string.lesson_n, period)
             }
             val dateLine = stringResource(
                 R.string.date_with_weekday,
@@ -192,8 +198,8 @@ fun EditHomeworkSheet(
                             period = period,
                             description = description.trim(),
                             isDone = isDone,
+                            subject = if (lesson == null) subject.trim() else "",
                         ),
-                        subject.trim(),
                         drafts.filterIsInstance<PhotoDraft.Saved>().map { it.fileName },
                         drafts.filterIsInstance<PhotoDraft.Picked>().map { it.uri },
                     )

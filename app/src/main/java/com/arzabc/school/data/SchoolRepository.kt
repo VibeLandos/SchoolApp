@@ -1,9 +1,11 @@
 ﻿package com.arzabc.school.data
 
 import android.net.Uri
+import androidx.room.withTransaction
 import java.io.File
 
 class SchoolRepository(
+    private val db: AppDatabase,
     private val lessonDao: LessonDao,
     private val homeworkDao: HomeworkDao,
     private val photoDao: HomeworkPhotoDao,
@@ -34,13 +36,17 @@ class SchoolRepository(
     }
 
     suspend fun replaceDayLessons(dayOfWeek: Int, lessons: List<Lesson>) {
-        lessonDao.deleteForDay(dayOfWeek)
-        lessons.forEach { lessonDao.upsert(it.copy(id = 0, dayOfWeek = dayOfWeek)) }
+        db.withTransaction {
+            lessonDao.deleteForDay(dayOfWeek)
+            lessons.forEach { lessonDao.upsert(it.copy(id = 0, dayOfWeek = dayOfWeek)) }
+        }
     }
 
     suspend fun replaceWeekLessons(lessons: List<Lesson>) {
-        lessonDao.deleteAll()
-        lessons.forEach { lessonDao.upsert(it.copy(id = 0)) }
+        db.withTransaction {
+            lessonDao.deleteAll()
+            lessons.forEach { lessonDao.upsert(it.copy(id = 0)) }
+        }
     }
 
     suspend fun saveHomework(

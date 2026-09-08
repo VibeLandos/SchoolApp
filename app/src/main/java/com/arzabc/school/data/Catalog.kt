@@ -68,6 +68,38 @@ object Dates {
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(loc) else it.toString() }
     }
 
+    fun weekdayName(dayOfWeek: Int): String =
+        weekdayName(LocalDate.now().with(DayOfWeek.of(dayOfWeek.coerceIn(1, 7))))
+
+    /** Next dates for a repeating weekday, from today through the school year (or a few weeks if the year already ended). */
+    fun upcomingWeekdays(
+        dayOfWeek: Int,
+        from: LocalDate = LocalDate.now(),
+        until: LocalDate,
+        limit: Int = 10,
+    ): List<LocalDate> {
+        val dow = DayOfWeek.of(dayOfWeek.coerceIn(1, 7))
+        var cursor = from
+        while (cursor.dayOfWeek != dow) cursor = cursor.plusDays(1)
+        val last = if (until.isBefore(cursor)) cursor.plusWeeks((limit - 1).toLong()) else until
+        val dates = ArrayList<LocalDate>(limit)
+        while (!cursor.isAfter(last) && dates.size < limit) {
+            dates.add(cursor)
+            cursor = cursor.plusWeeks(1)
+        }
+        return dates
+    }
+
+    /** This weekday on the current week (if still ahead) and the same weekday next week. */
+    fun datesForHomeworkPick(dayOfWeek: Int, from: LocalDate = LocalDate.now()): List<LocalDate> {
+        val thisWeek = weekMonday(from).plusDays((dayOfWeek.coerceIn(1, 7) - 1).toLong())
+        val nextWeek = thisWeek.plusWeeks(1)
+        return listOfNotNull(
+            thisWeek.takeIf { !it.isBefore(from) },
+            nextWeek,
+        ).distinct()
+    }
+
     fun weekdayShort(date: LocalDate): String {
         val loc = locale()
         return date.dayOfWeek.getDisplayName(TextStyle.SHORT, loc)
@@ -96,6 +128,7 @@ object Dates {
 }
 
 fun subjectFor(homework: Homework, lessons: List<Lesson>): String? {
+    if (homework.subject.isNotBlank()) return homework.subject
     val dayOfWeek = LocalDate.ofEpochDay(homework.epochDay).dayOfWeek.value
     return lessons.find { it.dayOfWeek == dayOfWeek && it.period == homework.period }?.subject
 }
