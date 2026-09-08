@@ -67,7 +67,7 @@ fun HomeworkListScreen(
     homework: List<Homework>,
     photos: List<HomeworkPhoto>,
     onSelectDate: (LocalDate) -> Unit,
-    onShiftWeek: (Long) -> Unit,
+    onShiftDay: (Int) -> Unit,
     onOpenHomework: (Homework) -> Unit,
     onToggle: (Homework) -> Unit,
     onAddHomework: () -> Unit,
@@ -87,7 +87,10 @@ fun HomeworkListScreen(
 
     LaunchedEffect(selectedDate) {
         val target = Dates.dayIndex(selectedDate, schoolDays)
-        if (pagerState.currentPage != target && !pagerState.isScrollInProgress) {
+        if (pagerState.currentPage == target || pagerState.isScrollInProgress) return@LaunchedEffect
+        if (kotlin.math.abs(pagerState.currentPage - target) == 1) {
+            pagerState.animateScrollToPage(target)
+        } else {
             pagerState.scrollToPage(target)
         }
     }
@@ -106,16 +109,16 @@ fun HomeworkListScreen(
             subtitle = Dates.formatFull(selectedDate),
             onOpenMenu = onOpenMenu,
             actions = {
-                IconButton(onClick = { onShiftWeek(-1) }) {
+                IconButton(onClick = { onShiftDay(-1) }) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = stringResource(R.string.cd_prev_week),
+                        contentDescription = stringResource(R.string.cd_prev_day),
                     )
                 }
-                IconButton(onClick = { onShiftWeek(1) }) {
+                IconButton(onClick = { onShiftDay(1) }) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = stringResource(R.string.cd_next_week),
+                        contentDescription = stringResource(R.string.cd_next_day),
                     )
                 }
             },

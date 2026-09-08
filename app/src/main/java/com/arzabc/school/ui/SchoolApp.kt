@@ -348,7 +348,7 @@ fun SchoolApp(
                             homework = ui.homework,
                             photos = ui.photos,
                             onSelectDate = viewModel::selectTaskDate,
-                            onShiftWeek = viewModel::shiftTaskWeek,
+                            onShiftDay = viewModel::shiftTaskDay,
                             onOpenHomework = ::openHomework,
                             onToggle = viewModel::toggleHomework,
                             onAddHomework = { editor = Editor.HomeworkAddChoice(ui.taskDate) },

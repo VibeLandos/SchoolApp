@@ -6,6 +6,8 @@
     <string name="cd_open_menu">Меню</string>
     <string name="cd_prev_week">Предыдущая неделя</string>
     <string name="cd_next_week">Следующая неделя</string>
+    <string name="cd_prev_day">Предыдущий день</string>
+    <string name="cd_next_day">Следующий день</string>
     <string name="cd_homework_photo">Фото к д/з</string>
     <string name="cd_remove_photo">Убрать фото</string>
     <string name="menu_appearance">Оформление</string>

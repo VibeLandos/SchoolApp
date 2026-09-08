@@ -48,6 +48,19 @@ object Dates {
         return if (date.dayOfWeek == DayOfWeek.SATURDAY) date.plusDays(2) else date.plusDays(1)
     }
 
+    /** Next or previous school day, skipping the weekend for the current week length. */
+    fun shiftSchoolDay(date: LocalDate, days: Int, schoolDays: Int): LocalDate {
+        if (days == 0) return clampToSchoolWeek(date, schoolDays)
+        val step = if (days > 0) 1L else -1L
+        var cursor = date
+        repeat(kotlin.math.abs(days)) {
+            do {
+                cursor = cursor.plusDays(step)
+            } while (isWeekend(cursor, schoolDays))
+        }
+        return cursor
+    }
+
     fun schoolDayOfWeek(date: LocalDate): Int = date.dayOfWeek.value
 
     fun weekDates(date: LocalDate, schoolDays: Int = 6): List<LocalDate> {

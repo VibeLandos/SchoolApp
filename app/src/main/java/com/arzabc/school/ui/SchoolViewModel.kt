@@ -90,9 +90,9 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         if (taskDate.value != next) taskDate.value = next
     }
 
-    fun shiftTaskWeek(weeks: Long) {
-        val days = settings.schoolDays.value
-        taskDate.value = Dates.clampToSchoolWeek(taskDate.value.plusWeeks(weeks), days)
+    fun shiftTaskDay(days: Int) {
+        val schoolDays = settings.schoolDays.value
+        taskDate.value = Dates.shiftSchoolDay(taskDate.value, days, schoolDays)
     }
 
     fun saveLesson(lesson: Lesson) {
