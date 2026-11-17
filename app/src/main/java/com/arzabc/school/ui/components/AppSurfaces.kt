@@ -21,7 +21,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Icon
@@ -408,5 +412,173 @@ fun LessonProgressRing(
             }
         }
         content()
+    }
+}
+
+val BlobShape = GenericShape { size, _ ->
+    val w = size.width
+    val h = size.height
+    moveTo(0.42f * w, 0f)
+    cubicTo(0.75f * w, 0f, w, 0.20f * h, w, 0.45f * h)
+    cubicTo(w, 0.70f * h, 0.85f * w, h, 0.62f * w, h)
+    cubicTo(0.38f * w, h, 0f, 0.85f * h, 0f, 0.60f * h)
+    cubicTo(0f, 0.35f * h, 0.15f * w, 0f, 0.42f * w, 0f)
+    close()
+}
+
+@Composable
+fun Md3TopHeader(
+    subtitle: String,
+    title: String,
+    onAvatarClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    avatarText: String = "А",
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(start = 24.dp, end = 20.dp, top = 8.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = subtitle,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = title,
+                fontSize = 40.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(BlobShape)
+                .background(MaterialTheme.colorScheme.tertiaryContainer)
+                .clickable(onClick = onAvatarClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = avatarText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
+fun HeroBannerCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(32.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+    ) {
+        Column {
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = subtitle,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
+fun GradeBlobBadge(
+    grade: Int,
+    modifier: Modifier = Modifier,
+    size: Dp = 48.dp,
+    fontSize: TextUnit = 20.sp,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(BlobShape)
+            .background(MaterialTheme.colorScheme.tertiaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = grade.toString(),
+            fontSize = fontSize,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+    }
+}
+
+@Composable
+fun Md3LessonCard(
+    time: String,
+    subject: String,
+    homeworkOrRoom: String,
+    grade: Int?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            text = time,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(56.dp),
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 4.dp),
+        ) {
+            Text(
+                text = subject,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (homeworkOrRoom.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = homeworkOrRoom,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (grade != null && grade > 0) {
+            GradeBlobBadge(grade = grade, size = 48.dp)
+        }
     }
 }

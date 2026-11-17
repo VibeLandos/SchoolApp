@@ -9,11 +9,13 @@ class SchoolRepository(
     private val lessonDao: LessonDao,
     private val homeworkDao: HomeworkDao,
     private val photoDao: HomeworkPhotoDao,
+    private val gradeDao: GradeDao,
     private val photoStore: HomeworkPhotoStore,
 ) {
     val lessons = lessonDao.observeAll()
     val homework = homeworkDao.observeAll()
     val photos = photoDao.observeAll()
+    val grades = gradeDao.observeAll()
 
     fun photoFile(fileName: String): File = photoStore.file(fileName)
 
@@ -103,5 +105,15 @@ class SchoolRepository(
             val name = photoStore.copyFromUri(uri) ?: return@forEach
             photoDao.insert(HomeworkPhoto(homeworkId = homeworkId, fileName = name, sortOrder = order++))
         }
+    }
+
+    suspend fun saveGrade(grade: Grade): Long = gradeDao.upsert(grade)
+
+    suspend fun deleteGrade(grade: Grade) {
+        gradeDao.delete(grade)
+    }
+
+    suspend fun deleteGradeById(id: Long) {
+        gradeDao.deleteById(id)
     }
 }

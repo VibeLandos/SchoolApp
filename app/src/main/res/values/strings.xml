@@ -3,6 +3,8 @@
     <string name="nav_diary">Дневник</string>
     <string name="nav_now">Сейчас</string>
     <string name="nav_tasks">Задания</string>
+    <string name="nav_grades">Оценки</string>
+    <string name="nav_profile">Профиль</string>
     <string name="cd_open_menu">Меню</string>
     <string name="cd_prev_week">Предыдущая неделя</string>
     <string name="cd_next_week">Следующая неделя</string>

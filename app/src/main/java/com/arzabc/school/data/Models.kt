@@ -50,3 +50,16 @@ data class HomeworkPhoto(
     val fileName: String,
     val sortOrder: Int = 0,
 )
+
+@Entity(
+    tableName = "grades",
+    indices = [Index(value = ["subject", "epochDay"])],
+)
+data class Grade(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val subject: String,
+    val value: Int,
+    val epochDay: Long = 0,
+    val period: Int = 0,
+    val comment: String = "",
+)

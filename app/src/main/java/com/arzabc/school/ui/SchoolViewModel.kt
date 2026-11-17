@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.arzabc.school.SchoolApplication
 import com.arzabc.school.data.Dates
+import com.arzabc.school.data.Grade
 import com.arzabc.school.data.Homework
 import com.arzabc.school.data.HomeworkPhoto
 import com.arzabc.school.data.Lesson
@@ -32,6 +33,7 @@ data class DiaryUiState(
     val lessons: List<Lesson> = emptyList(),
     val homework: List<Homework> = emptyList(),
     val photos: List<HomeworkPhoto> = emptyList(),
+    val grades: List<Grade> = emptyList(),
     val weekBells: WeekBells = WeekBells(),
     val schoolDays: Int = 6,
     val schoolYear: SchoolYear = SchoolYear.academicFor(),
@@ -43,15 +45,34 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
     private val selectedDate = MutableStateFlow(Dates.todaySchoolDate(settings.schoolDays.value))
     private val taskDate = MutableStateFlow(Dates.todaySchoolDate(settings.schoolDays.value))
 
-    val uiState: StateFlow<DiaryUiState> = combine(
-        combine(selectedDate, taskDate) { selected, task -> selected to task },
+    private val datesFlow = combine(selectedDate, taskDate) { selected, task -> selected to task }
+    private val repoFlow = combine(
         repository.lessons,
         repository.homework,
         repository.photos,
-        combine(settings.weekBells, settings.schoolDays, settings.schoolYear) { bells, days, year ->
-            Triple(bells, days, year)
-        },
-    ) { dates, lessons, homework, photos, settingsSlice ->
+        repository.grades,
+    ) { lessons, homework, photos, grades ->
+        data class RepoSlice(
+            val lessons: List<Lesson>,
+            val homework: List<Homework>,
+            val photos: List<HomeworkPhoto>,
+            val grades: List<Grade>,
+        )
+        RepoSlice(lessons, homework, photos, grades)
+    }
+    private val settingsFlow = combine(
+        settings.weekBells,
+        settings.schoolDays,
+        settings.schoolYear,
+    ) { bells, days, year ->
+        Triple(bells, days, year)
+    }
+
+    val uiState: StateFlow<DiaryUiState> = combine(
+        datesFlow,
+        repoFlow,
+        settingsFlow,
+    ) { dates, repo, settingsSlice ->
         val (selected, task) = dates
         val (weekBells, schoolDays, schoolYear) = settingsSlice
         val clamped = Dates.clampToSchoolWeek(selected, schoolDays)
@@ -61,9 +82,10 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
             taskDate = clampedTask,
             weekDates = Dates.weekDates(clamped, schoolDays),
             taskWeekDates = Dates.weekDates(clampedTask, schoolDays),
-            lessons = lessons,
-            homework = homework,
-            photos = photos,
+            lessons = repo.lessons,
+            homework = repo.homework,
+            photos = repo.photos,
+            grades = repo.grades,
             weekBells = weekBells,
             schoolDays = schoolDays,
             schoolYear = schoolYear,
@@ -119,6 +141,18 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleHomework(homework: Homework) {
         viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.toggleHomework(homework) }
+    }
+
+    fun saveGrade(grade: Grade) {
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.saveGrade(grade) }
+    }
+
+    fun deleteGrade(grade: Grade) {
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.deleteGrade(grade) }
+    }
+
+    fun deleteGradeById(id: Long) {
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.deleteGradeById(id) }
     }
 
     fun setWeekBells(value: WeekBells) {

@@ -22,7 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DrawerValue
@@ -70,16 +72,20 @@ import com.arzabc.school.data.SchoolCatalog
 import com.arzabc.school.ui.components.AppUpdateDialog
 import com.arzabc.school.ui.components.CenteredChoiceDialog
 import com.arzabc.school.ui.components.EditHomeworkSheet
-import com.arzabc.school.ui.components.PickHomeworkDateSheet
-import com.arzabc.school.ui.components.PickTaskSubjectSheet
 import com.arzabc.school.ui.components.EditLessonSheet
 import com.arzabc.school.ui.components.ImportScheduleSheet
+import com.arzabc.school.ui.components.PickHomeworkDateSheet
+import com.arzabc.school.ui.components.PickTaskSubjectSheet
+import com.arzabc.school.ui.components.SchoolYearSheet
 import com.arzabc.school.ui.components.isGlassStyle
 import com.arzabc.school.ui.diary.DiaryScreen
+import com.arzabc.school.ui.grades.GradesScreen
 import com.arzabc.school.ui.homework.HomeworkListScreen
 import com.arzabc.school.ui.menu.AppDrawer
 import com.arzabc.school.ui.menu.BellScheduleSheet
 import com.arzabc.school.ui.now.NowScreen
+import com.arzabc.school.ui.profile.ProfileScreen
+import com.arzabc.school.ui.tasks.TasksScreen
 import com.arzabc.school.ui.theme.Appearance
 import com.arzabc.school.ui.theme.ColorSeed
 import com.arzabc.school.ui.theme.GlassWallpaper
@@ -96,8 +102,9 @@ import kotlinx.coroutines.withContext
 
 private object Routes {
     const val Diary = "diary"
-    const val Now = "now"
     const val Tasks = "tasks"
+    const val Grades = "grades"
+    const val Profile = "profile"
 }
 
 private sealed interface Editor {
@@ -120,6 +127,7 @@ private sealed interface Editor {
     data class HomeworkSubjectPick(val date: LocalDate) : Editor
 
     data object Bells : Editor
+    data object Year : Editor
     data object Import : Editor
     data object Update : Editor
 }
@@ -208,7 +216,13 @@ fun SchoolApp(
         return SchoolCatalog.nextFreePeriod(used)
     }
 
-    BackHandler(enabled = drawerShowing) { closeMenu() }
+    BackHandler(enabled = drawerShowing || (route != null && route != Routes.Diary)) {
+        if (drawerShowing) {
+            closeMenu()
+        } else if (route != Routes.Diary) {
+            go(Routes.Diary)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         if (glass) {
@@ -264,20 +278,6 @@ fun SchoolApp(
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 containerColor = if (glass) Color.Transparent else MaterialTheme.colorScheme.surface,
-                floatingActionButton = {
-                    if (!glass) {
-                        when (route) {
-                            Routes.Diary -> FloatingActionButton(onClick = ::addLessonForSelected) {
-                                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_lesson))
-                            }
-                            Routes.Tasks -> FloatingActionButton(
-                                onClick = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
-                            ) {
-                                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_homework))
-                            }
-                        }
-                    }
-                },
                 bottomBar = {
                     if (!glass) {
                         MaterialNavBar(
@@ -290,8 +290,9 @@ fun SchoolApp(
                                 if (onDiary && now - lastDiaryTapAt < 500L) viewModel.goToToday()
                                 lastDiaryTapAt = now
                             },
-                            onNow = { go(Routes.Now) },
                             onTasks = { go(Routes.Tasks) },
+                            onGrades = { go(Routes.Grades) },
+                            onProfile = { go(Routes.Profile) },
                         )
                     }
                 },
@@ -301,20 +302,28 @@ fun SchoolApp(
                     startDestination = Routes.Diary,
                     modifier = Modifier
                         .padding(padding)
-                        .then(if (glass) Modifier.padding(bottom = 168.dp) else Modifier),
+                        .then(if (glass) Modifier.padding(bottom = 96.dp) else Modifier),
                 ) {
                     composable(Routes.Diary) {
                         DiaryScreen(
                             selectedDate = ui.selectedDate,
                             weekDates = ui.weekDates,
                             lessons = ui.lessons,
+                            homework = ui.homework,
+                            grades = ui.grades,
                             weekBells = ui.weekBells,
                             schoolDays = ui.schoolDays,
                             onSelectDate = viewModel::selectDate,
                             onEditLesson = { date, period, lesson ->
                                 editor = Editor.LessonSlot(date, period, lesson)
                             },
-                            onAddHomework = ::openHomeworkDates,
+                            onDeleteLesson = viewModel::deleteLesson,
+                            onAddHomework = { lesson, date ->
+                                openHomeworkFor(lesson, date)
+                            },
+                            onOpenHomework = ::openHomework,
+                            onSaveGrade = viewModel::saveGrade,
+                            onDeleteGrade = viewModel::deleteGrade,
                             onAddLesson = { date ->
                                 val used = ui.lessons
                                     .filter { it.dayOfWeek == Dates.schoolDayOfWeek(date) }
@@ -326,33 +335,57 @@ fun SchoolApp(
                                     null,
                                 )
                             },
-                            onOpenMenu = openMenu,
-                        )
-                    }
-                    composable(Routes.Now) {
-                        NowScreen(
-                            lessons = ui.lessons,
-                            weekBells = ui.weekBells,
-                            schoolDays = ui.schoolDays,
-                            schoolYear = ui.schoolYear,
-                            onSaveSchoolYear = viewModel::setSchoolYear,
-                            onOpenMenu = openMenu,
+                            onOpenProfile = { go(Routes.Profile) },
                         )
                     }
                     composable(Routes.Tasks) {
-                        HomeworkListScreen(
-                            selectedDate = ui.taskDate,
-                            weekDates = ui.taskWeekDates,
-                            schoolDays = ui.schoolDays,
-                            lessons = ui.lessons,
+                        TasksScreen(
                             homework = ui.homework,
-                            photos = ui.photos,
-                            onSelectDate = viewModel::selectTaskDate,
-                            onShiftDay = viewModel::shiftTaskDay,
+                            lessons = ui.lessons,
+                            onToggleHomework = viewModel::toggleHomework,
                             onOpenHomework = ::openHomework,
-                            onToggle = viewModel::toggleHomework,
                             onAddHomework = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
-                            onOpenMenu = openMenu,
+                            onOpenProfile = { go(Routes.Profile) },
+                        )
+                    }
+                    composable(Routes.Grades) {
+                        GradesScreen(
+                            grades = ui.grades,
+                            lessons = ui.lessons,
+                            onSaveGrade = viewModel::saveGrade,
+                            onDeleteGrade = viewModel::deleteGrade,
+                            onOpenProfile = { go(Routes.Profile) },
+                        )
+                    }
+                    composable(Routes.Profile) {
+                        ProfileScreen(
+                            appearance = appearance,
+                            onStyle = onStyle,
+                            onBrightness = onBrightness,
+                            onSeed = onSeed,
+                            language = language,
+                            onLanguage = onLanguage,
+                            schoolDays = ui.schoolDays,
+                            onSchoolDays = viewModel::setSchoolDays,
+                            schoolYear = ui.schoolYear,
+                            onOpenBells = { editor = Editor.Bells },
+                            onOpenSchoolYear = { editor = Editor.Year },
+                            onShareDay = {
+                                val send = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, viewModel.shareDayText())
+                                }
+                                context.startActivity(Intent.createChooser(send, shareDayTitle))
+                            },
+                            onShareWeek = {
+                                val send = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, viewModel.shareWeekText())
+                                }
+                                context.startActivity(Intent.createChooser(send, shareWeekTitle))
+                            },
+                            onImportSchedule = { editor = Editor.Import },
+                            onCheckUpdate = { editor = Editor.Update },
                         )
                     }
                 }
@@ -366,23 +399,6 @@ fun SchoolApp(
                         .padding(bottom = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    if (route == Routes.Diary) {
-                        GlassAddPill(
-                            label = stringResource(R.string.add_lesson),
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .padding(end = 18.dp, bottom = 12.dp),
-                            onClick = ::addLessonForSelected,
-                        )
-                    } else if (route == Routes.Tasks) {
-                        GlassAddPill(
-                            label = stringResource(R.string.add_homework),
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .padding(end = 18.dp, bottom = 12.dp),
-                            onClick = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
-                        )
-                    }
                     GlassTabBar(
                         route = route,
                         openTasks = openTasks,
@@ -393,8 +409,9 @@ fun SchoolApp(
                             if (onDiary && now - lastDiaryTapAt < 500L) viewModel.goToToday()
                             lastDiaryTapAt = now
                         },
-                        onNow = { go(Routes.Now) },
                         onTasks = { go(Routes.Tasks) },
+                        onGrades = { go(Routes.Grades) },
+                        onProfile = { go(Routes.Profile) },
                     )
                 }
             }
@@ -492,6 +509,14 @@ fun SchoolApp(
                 onChange = viewModel::setWeekBells,
                 onDismiss = { editor = null },
             )
+            Editor.Year -> SchoolYearSheet(
+                year = ui.schoolYear,
+                onDismiss = { editor = null },
+                onSave = { year ->
+                    viewModel.setSchoolYear(year)
+                    editor = null
+                },
+            )
             Editor.Import -> ImportScheduleSheet(
                 onDismiss = { editor = null },
                 onImport = viewModel::importScheduleText,
@@ -515,21 +540,18 @@ private fun MaterialNavBar(
     route: String?,
     openTasks: Int,
     onDiary: () -> Unit,
-    onNow: () -> Unit,
     onTasks: () -> Unit,
+    onGrades: () -> Unit,
+    onProfile: () -> Unit,
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
         NavigationBarItem(
             selected = route == Routes.Diary,
             onClick = onDiary,
             icon = { Icon(Icons.AutoMirrored.Outlined.MenuBook, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_diary)) },
-        )
-        NavigationBarItem(
-            selected = route == Routes.Now,
-            onClick = onNow,
-            icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_now)) },
         )
         NavigationBarItem(
             selected = route == Routes.Tasks,
@@ -541,6 +563,18 @@ private fun MaterialNavBar(
             },
             label = { Text(stringResource(R.string.nav_tasks)) },
         )
+        NavigationBarItem(
+            selected = route == Routes.Grades,
+            onClick = onGrades,
+            icon = { Icon(Icons.Outlined.Star, contentDescription = null) },
+            label = { Text(stringResource(R.string.nav_grades)) },
+        )
+        NavigationBarItem(
+            selected = route == Routes.Profile,
+            onClick = onProfile,
+            icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+            label = { Text(stringResource(R.string.nav_profile)) },
+        )
     }
 }
 
@@ -549,8 +583,9 @@ private fun GlassTabBar(
     route: String?,
     openTasks: Int,
     onDiary: () -> Unit,
-    onNow: () -> Unit,
     onTasks: () -> Unit,
+    onGrades: () -> Unit,
+    onProfile: () -> Unit,
 ) {
     val tokens = LocalGlassTokens.current
     Row(
@@ -561,7 +596,6 @@ private fun GlassTabBar(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         GlassTab(Icons.AutoMirrored.Outlined.MenuBook, stringResource(R.string.nav_diary), route == Routes.Diary, onDiary)
-        GlassTab(Icons.Outlined.Schedule, stringResource(R.string.nav_now), route == Routes.Now, onNow)
         GlassTab(
             Icons.Outlined.CheckCircle,
             stringResource(R.string.nav_tasks),
@@ -569,6 +603,8 @@ private fun GlassTabBar(
             onTasks,
             badge = openTasks,
         )
+        GlassTab(Icons.Outlined.Star, stringResource(R.string.nav_grades), route == Routes.Grades, onGrades)
+        GlassTab(Icons.Outlined.Person, stringResource(R.string.nav_profile), route == Routes.Profile, onProfile)
     }
 }
 

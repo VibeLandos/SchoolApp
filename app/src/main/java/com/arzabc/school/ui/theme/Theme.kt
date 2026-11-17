@@ -46,7 +46,7 @@ enum class ThemeBrightness(val prefValue: String, @StringRes val titleRes: Int) 
 data class Appearance(
     val style: UiStyle = UiStyle.Material,
     val brightness: ThemeBrightness = ThemeBrightness.Light,
-    val seed: ColorSeed = ColorSeed.Indigo,
+    val seed: ColorSeed = ColorSeed.Purple,
 )
 
 val LocalUiStyle = staticCompositionLocalOf { UiStyle.Material }

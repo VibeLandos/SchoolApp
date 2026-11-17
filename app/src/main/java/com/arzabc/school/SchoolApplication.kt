@@ -16,6 +16,7 @@ class SchoolApplication : Application() {
             db.lessonDao(),
             db.homeworkDao(),
             db.homeworkPhotoDao(),
+            db.gradeDao(),
             HomeworkPhotoStore(this),
         )
     }

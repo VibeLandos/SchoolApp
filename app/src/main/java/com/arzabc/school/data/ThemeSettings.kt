@@ -115,9 +115,9 @@ class ThemeSettings(context: Context) {
             )
         }
         return when (prefs.getString(KEY_MODE, null)) {
-            "dark" -> Appearance(UiStyle.Material, ThemeBrightness.Dark, ColorSeed.Indigo)
+            "dark" -> Appearance(UiStyle.Material, ThemeBrightness.Dark, ColorSeed.Purple)
             "system" -> Appearance(UiStyle.Material, ThemeBrightness.System, ColorSeed.Wallpaper)
-            else -> Appearance(UiStyle.Material, ThemeBrightness.Light, ColorSeed.Indigo)
+            else -> Appearance(UiStyle.Material, ThemeBrightness.Light, ColorSeed.Purple)
         }
     }
 

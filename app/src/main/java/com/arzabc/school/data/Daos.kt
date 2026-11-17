@@ -67,3 +67,21 @@ interface HomeworkPhotoDao {
     @Delete
     suspend fun delete(photo: HomeworkPhoto)
 }
+
+@Dao
+interface GradeDao {
+    @Query("SELECT * FROM grades ORDER BY epochDay DESC, id DESC")
+    fun observeAll(): Flow<List<Grade>>
+
+    @Query("SELECT * FROM grades WHERE subject = :subject ORDER BY epochDay DESC, id DESC")
+    fun forSubject(subject: String): Flow<List<Grade>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(grade: Grade): Long
+
+    @Delete
+    suspend fun delete(grade: Grade)
+
+    @Query("DELETE FROM grades WHERE id = :id")
+    suspend fun deleteById(id: Long)
+}
