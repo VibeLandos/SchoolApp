@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.Language
@@ -32,6 +34,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arzabc.school.BuildConfig
 import com.arzabc.school.R
 import com.arzabc.school.data.AppLanguage
 import com.arzabc.school.data.SchoolYear
@@ -62,12 +69,18 @@ fun ProfileScreen(
     onSchoolDays: (Int) -> Unit,
     schoolYear: SchoolYear,
     onOpenBells: () -> Unit,
+    onOpenBellsWizard: () -> Unit = {},
     onOpenSchoolYear: () -> Unit,
     onShareDay: () -> Unit,
     onShareWeek: () -> Unit,
     onImportSchedule: () -> Unit,
     onCheckUpdate: () -> Unit,
 ) {
+    var showThemeSheet by remember { mutableStateOf(false) }
+    var showSeedSheet by remember { mutableStateOf(false) }
+    var showSchoolDaysSheet by remember { mutableStateOf(false) }
+    var showLanguageSheet by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -134,7 +147,7 @@ fun ProfileScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Версия 2.1",
+                            text = "Версия ${BuildConfig.VERSION_NAME}",
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         )
@@ -156,9 +169,18 @@ fun ProfileScreen(
 
             item {
                 SettingsActionCard(
+                    icon = Icons.Outlined.AutoAwesome,
+                    title = "Мастер настройки звонков",
+                    subtitle = "Генератор расписания звонков на неделю",
+                    onClick = onOpenBellsWizard,
+                )
+            }
+
+            item {
+                SettingsActionCard(
                     icon = Icons.Outlined.Notifications,
                     title = "Расписание звонков",
-                    subtitle = "Настройка уроков и перемен",
+                    subtitle = "Ручная настройка уроков и перемен",
                     onClick = onOpenBells,
                 )
             }
@@ -168,7 +190,7 @@ fun ProfileScreen(
                     icon = Icons.Outlined.CalendarMonth,
                     title = "Учебная неделя",
                     subtitle = if (schoolDays == 5) "5 дней · пн–пт" else "6 дней · пн–сб",
-                    onClick = { onSchoolDays(if (schoolDays == 5) 6 else 5) },
+                    onClick = { showSchoolDaysSheet = true },
                 )
             }
 
@@ -239,49 +261,31 @@ fun ProfileScreen(
                         ThemeBrightness.Dark -> "Тёмная"
                         ThemeBrightness.System -> "Как в системе"
                     },
-                    onClick = {
-                        val next = when (appearance.brightness) {
-                            ThemeBrightness.Light -> ThemeBrightness.Dark
-                            ThemeBrightness.Dark -> ThemeBrightness.System
-                            ThemeBrightness.System -> ThemeBrightness.Light
-                        }
-                        onBrightness(next)
-                    },
+                    onClick = { showThemeSheet = true },
                 )
             }
 
             item {
                 SettingsActionCard(
-                    icon = Icons.Outlined.Palette,
+                    icon = Icons.Outlined.ColorLens,
                     title = "Цветовая гамма",
                     subtitle = when (appearance.seed) {
                         ColorSeed.Purple -> "Фиолетовая (MD3)"
                         ColorSeed.Indigo -> "Индиго"
                         ColorSeed.Teal -> "Морская волна"
                         ColorSeed.Coral -> "Коралловая"
-                        ColorSeed.Wallpaper -> "Цвета обоев"
+                        ColorSeed.Wallpaper -> "Цвета обоев (Material You)"
                     },
-                    onClick = {
-                        val next = when (appearance.seed) {
-                            ColorSeed.Purple -> ColorSeed.Indigo
-                            ColorSeed.Indigo -> ColorSeed.Teal
-                            ColorSeed.Teal -> ColorSeed.Coral
-                            ColorSeed.Coral -> ColorSeed.Wallpaper
-                            ColorSeed.Wallpaper -> ColorSeed.Purple
-                        }
-                        onSeed(next)
-                    },
+                    onClick = { showSeedSheet = true },
                 )
             }
 
             item {
                 SettingsActionCard(
                     icon = Icons.Outlined.Language,
-                    title = "Язык приложения",
+                    title = "Язык интерфейса",
                     subtitle = if (language == AppLanguage.Russian) "Русский" else "English",
-                    onClick = {
-                        onLanguage(if (language == AppLanguage.Russian) AppLanguage.English else AppLanguage.Russian)
-                    },
+                    onClick = { showLanguageSheet = true },
                 )
             }
 
@@ -294,6 +298,38 @@ fun ProfileScreen(
                 )
             }
         }
+    }
+
+    if (showThemeSheet) {
+        ThemeSelectionSheet(
+            current = appearance.brightness,
+            onSelect = onBrightness,
+            onDismiss = { showThemeSheet = false },
+        )
+    }
+
+    if (showSeedSheet) {
+        ColorSeedSelectionSheet(
+            current = appearance.seed,
+            onSelect = onSeed,
+            onDismiss = { showSeedSheet = false },
+        )
+    }
+
+    if (showSchoolDaysSheet) {
+        SchoolDaysSelectionSheet(
+            current = schoolDays,
+            onSelect = onSchoolDays,
+            onDismiss = { showSchoolDaysSheet = false },
+        )
+    }
+
+    if (showLanguageSheet) {
+        LanguageSelectionSheet(
+            current = language,
+            onSelect = onLanguage,
+            onDismiss = { showLanguageSheet = false },
+        )
     }
 }
 

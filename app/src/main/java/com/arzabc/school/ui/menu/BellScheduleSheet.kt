@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -63,13 +68,20 @@ private sealed interface BellsPane {
 fun BellScheduleSheet(
     weekBells: WeekBells,
     schoolDays: Int,
+    startWithWizard: Boolean = false,
     onChange: (WeekBells) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val today = Dates.todaySchoolDate(schoolDays).dayOfWeek.value.coerceIn(1, schoolDays)
     var pane by remember {
         mutableStateOf(
-            if (weekBells.setupDone) BellsPane.Editor(today) else BellsPane.Offer,
+            if (startWithWizard) {
+                BellsPane.Wizard(step = 1, targetDay = null)
+            } else if (weekBells.setupDone) {
+                BellsPane.Editor(today)
+            } else {
+                BellsPane.Offer
+            },
         )
     }
     var recipe by remember { mutableStateOf(BellRecipe.standard()) }
@@ -353,6 +365,15 @@ private fun EditorPane(
                 )
             }
         }
+    }
+    FilledTonalButton(
+        onClick = { onQuickSetup(null) },
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Быстрая настройка звонков (генератор)")
     }
     Spacer(Modifier.height(8.dp))
     repeat(SchoolCatalog.PERIODS) { index ->

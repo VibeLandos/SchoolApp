@@ -126,7 +126,7 @@ private sealed interface Editor {
     data class HomeworkAddChoice(val date: LocalDate) : Editor
     data class HomeworkSubjectPick(val date: LocalDate) : Editor
 
-    data object Bells : Editor
+    data class Bells(val startWithWizard: Boolean = false) : Editor
     data object Year : Editor
     data object Import : Editor
     data object Update : Editor
@@ -246,7 +246,7 @@ fun SchoolApp(
                     onSchoolDays = viewModel::setSchoolDays,
                     onOpenBells = {
                         closeMenu()
-                        editor = Editor.Bells
+                        editor = Editor.Bells()
                     },
                     onShareDay = {
                         closeMenu()
@@ -374,7 +374,8 @@ fun SchoolApp(
                             schoolDays = ui.schoolDays,
                             onSchoolDays = viewModel::setSchoolDays,
                             schoolYear = ui.schoolYear,
-                            onOpenBells = { editor = Editor.Bells },
+                            onOpenBells = { editor = Editor.Bells() },
+                            onOpenBellsWizard = { editor = Editor.Bells(startWithWizard = true) },
                             onOpenSchoolYear = { editor = Editor.Year },
                             onShareDay = {
                                 val send = Intent(Intent.ACTION_SEND).apply {
@@ -511,9 +512,10 @@ fun SchoolApp(
                 onPickLesson = { lesson -> openHomeworkFor(lesson, current.date) },
                 onDismiss = { editor = null },
             )
-            Editor.Bells -> BellScheduleSheet(
+            is Editor.Bells -> BellScheduleSheet(
                 weekBells = ui.weekBells,
                 schoolDays = ui.schoolDays,
+                startWithWizard = current.startWithWizard,
                 onChange = viewModel::setWeekBells,
                 onDismiss = { editor = null },
             )
