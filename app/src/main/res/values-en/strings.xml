@@ -67,6 +67,8 @@
     <string name="bells_selected_day">%1$s · %2$s</string>
     <string name="bells_quick_again">Quick setup for the week</string>
     <string name="bells_quick_this_day">Set up this day again</string>
+    <string name="bells_apply_to_week">Apply to whole week</string>
+    <string name="bells_reset_to_week">Reset to week bells</string>
     <string name="now_sunday">It’s a day off — no lessons.</string>
     <string name="now_no_lessons">No lessons written in for today yet.</string>
     <string name="now_until_start">until it starts</string>

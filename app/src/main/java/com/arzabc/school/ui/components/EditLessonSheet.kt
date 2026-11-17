@@ -56,8 +56,11 @@ fun EditLessonSheet(
     var room by remember(existing) { mutableStateOf(existing?.room.orEmpty()) }
     var chosenPeriod by remember(existing, period) { mutableStateOf(period) }
     val slot = bells.of(chosenPeriod)
-    val periodChoices = remember(usedPeriods, chosenPeriod) {
-        val maxRegular = maxOf(SchoolCatalog.PERIODS, chosenPeriod, usedPeriods.maxOrNull() ?: 0)
+    val otherUsedPeriods = remember(usedPeriods, existing) {
+        if (existing != null) usedPeriods - existing.period else usedPeriods
+    }
+    val periodChoices = remember(otherUsedPeriods, chosenPeriod) {
+        val maxRegular = maxOf(SchoolCatalog.PERIODS, chosenPeriod, otherUsedPeriods.maxOrNull() ?: 0)
         (0..maxRegular).toList()
     }
 
@@ -106,7 +109,7 @@ fun EditLessonSheet(
                 maxItemsInEachRow = 5,
             ) {
                 periodChoices.forEach { number ->
-                    val taken = number != chosenPeriod && number in usedPeriods
+                    val taken = number != chosenPeriod && number in otherUsedPeriods
                     FilterChip(
                         selected = chosenPeriod == number,
                         onClick = { if (!taken) chosenPeriod = number },

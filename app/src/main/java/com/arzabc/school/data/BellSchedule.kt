@@ -62,8 +62,9 @@ data class BellSchedule(val periods: List<BellPeriod>) {
     }
 
     fun replacing(period: Int, start: String? = null, end: String? = null): BellSchedule {
-        val filled = (1..SchoolCatalog.PERIODS).map { of(it) }.toMutableList()
-        val index = (period - 1).coerceIn(0, SchoolCatalog.PERIODS - 1)
+        val total = maxOf(SchoolCatalog.PERIODS, periods.size, period)
+        val filled = (1..total).map { of(it) }.toMutableList()
+        val index = (period - 1).coerceIn(0, total - 1)
         val current = filled[index]
         filled[index] = BellPeriod(start ?: current.start, end ?: current.end)
         return BellSchedule(filled)
@@ -78,16 +79,17 @@ data class BellSchedule(val periods: List<BellPeriod>) {
 
         fun decodeOrNull(raw: String?): BellSchedule? {
             if (raw.isNullOrBlank()) return null
-            val parts = raw.split(';')
-            if (parts.size != SchoolCatalog.PERIODS) return null
+            val parts = raw.split(';').map { it.trim() }.filter { it.isNotEmpty() }
+            if (parts.isEmpty()) return null
             val parsed = parts.map { token ->
                 val dash = token.indexOf('-')
                 if (dash <= 0) return null
-                val start = token.substring(0, dash)
-                val end = token.substring(dash + 1)
+                val start = token.substring(0, dash).trim()
+                val end = token.substring(dash + 1).trim()
                 if (!isHm(start) || !isHm(end)) return null
                 BellPeriod(start, end)
             }
+            if (parsed.isEmpty()) return null
             return BellSchedule(parsed)
         }
 
@@ -110,12 +112,20 @@ data class WeekBells(
     fun isCustom(dayOfWeek: Int): Boolean = overrides.containsKey(schoolDay(dayOfWeek))
 
     fun withWeek(schedule: BellSchedule): WeekBells =
-        copy(week = schedule, overrides = emptyMap(), setupDone = true)
+        copy(week = schedule, setupDone = true)
 
     fun withDay(dayOfWeek: Int, schedule: BellSchedule): WeekBells {
         val day = schoolDay(dayOfWeek)
         return copy(overrides = overrides + (day to schedule), setupDone = true)
     }
+
+    fun withoutDay(dayOfWeek: Int): WeekBells {
+        val day = schoolDay(dayOfWeek)
+        return copy(overrides = overrides - day)
+    }
+
+    fun applyingToAll(schedule: BellSchedule): WeekBells =
+        copy(week = schedule, overrides = emptyMap(), setupDone = true)
 
     fun markedSetup(): WeekBells = copy(setupDone = true)
 
@@ -129,8 +139,8 @@ data class WeekBells(
             return raw.split('|').mapNotNull { token ->
                 val colon = token.indexOf(':')
                 if (colon <= 0) return@mapNotNull null
-                val day = token.substring(0, colon).toIntOrNull() ?: return@mapNotNull null
-                if (day !in 1..6) return@mapNotNull null
+                val day = token.substring(0, colon).trim().toIntOrNull() ?: return@mapNotNull null
+                if (day !in 1..7) return@mapNotNull null
                 val schedule = BellSchedule.decodeOrNull(token.substring(colon + 1))
                     ?: return@mapNotNull null
                 day to schedule

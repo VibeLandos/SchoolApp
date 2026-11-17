@@ -119,7 +119,7 @@ fun BellScheduleSheet(
                         val built = recipe.build()
                         onChange(
                             if (current.targetDay == null) {
-                                weekBells.withWeek(built)
+                                weekBells.applyingToAll(built)
                             } else {
                                 weekBells.withDay(current.targetDay, built)
                             },
@@ -375,8 +375,11 @@ private fun EditorPane(
                     .semantics { role = Role.Button }
                     .clickable {
                         pickTime(slot.start) { time ->
-                            val base = if (custom) schedule else weekBells.week
-                            onChange(weekBells.withDay(day, base.replacing(period, start = time)))
+                            if (custom) {
+                                onChange(weekBells.withDay(day, schedule.replacing(period, start = time)))
+                            } else {
+                                onChange(weekBells.copy(week = weekBells.week.replacing(period, start = time)))
+                            }
                         }
                     }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -389,12 +392,31 @@ private fun EditorPane(
                     .semantics { role = Role.Button }
                     .clickable {
                         pickTime(slot.end) { time ->
-                            val base = if (custom) schedule else weekBells.week
-                            onChange(weekBells.withDay(day, base.replacing(period, end = time)))
+                            if (custom) {
+                                onChange(weekBells.withDay(day, schedule.replacing(period, end = time)))
+                            } else {
+                                onChange(weekBells.copy(week = weekBells.week.replacing(period, end = time)))
+                            }
                         }
                     }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    if (custom) {
+        TextButton(
+            onClick = { onChange(weekBells.withoutDay(day)) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.bells_reset_to_week))
+        }
+    } else {
+        TextButton(
+            onClick = { onChange(weekBells.applyingToAll(schedule)) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.bells_apply_to_week))
         }
     }
     OutlinedButton(

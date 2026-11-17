@@ -57,7 +57,7 @@ class ThemeSettings(context: Context) {
         _language.value = language
     }
 
-    fun setWeekBells(value: WeekBells, sync: Boolean = false) {
+    fun setWeekBells(value: WeekBells, sync: Boolean = true) {
         prefs.edit()
             .putString(KEY_BELLS, value.week.encode())
             .putString(KEY_BELLS_DAYS, value.encodeDays())
@@ -66,7 +66,7 @@ class ThemeSettings(context: Context) {
         _weekBells.value = value
     }
 
-    fun setSchoolDays(days: Int, sync: Boolean = false) {
+    fun setSchoolDays(days: Int, sync: Boolean = true) {
         val value = days.coerceIn(5, 6)
         prefs.edit().putInt(KEY_SCHOOL_DAYS, value).save(sync)
         _schoolDays.value = value

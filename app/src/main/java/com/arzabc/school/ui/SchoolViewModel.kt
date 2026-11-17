@@ -96,11 +96,11 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun saveLesson(lesson: Lesson) {
-        viewModelScope.launch { repository.saveLesson(lesson) }
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.saveLesson(lesson) }
     }
 
     fun deleteLesson(lesson: Lesson) {
-        viewModelScope.launch { repository.deleteLesson(lesson) }
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.deleteLesson(lesson) }
     }
 
     fun saveHomework(
@@ -108,24 +108,26 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         keepFileNames: List<String>,
         newUris: List<Uri>,
     ) {
-        viewModelScope.launch { repository.saveHomework(homework, keepFileNames, newUris) }
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) {
+            repository.saveHomework(homework, keepFileNames, newUris)
+        }
     }
 
     fun deleteHomework(homework: Homework) {
-        viewModelScope.launch { repository.deleteHomework(homework) }
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.deleteHomework(homework) }
     }
 
     fun toggleHomework(homework: Homework) {
-        viewModelScope.launch { repository.toggleHomework(homework) }
+        viewModelScope.launch(NonCancellable + Dispatchers.IO) { repository.toggleHomework(homework) }
     }
 
     fun setWeekBells(value: WeekBells) {
-        settings.setWeekBells(value)
+        settings.setWeekBells(value, sync = true)
     }
 
     fun setSchoolDays(days: Int) {
         val value = days.coerceIn(5, 6)
-        settings.setSchoolDays(value)
+        settings.setSchoolDays(value, sync = true)
         selectedDate.value = Dates.clampToSchoolWeek(selectedDate.value, value)
         taskDate.value = Dates.clampToSchoolWeek(taskDate.value, value)
     }
@@ -162,7 +164,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         val state = uiState.value
         when (parsed) {
             is SchedulePayload.Day -> {
-                val day = Dates.schoolDayOfWeek(state.selectedDate)
+                val day = parsed.value.dayOfWeek
                 val bells = parsed.value.bells
                 val lessons = parsed.value.lessons.map { lesson ->
                     val slot = bells.of(lesson.period)

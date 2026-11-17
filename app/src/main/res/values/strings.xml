@@ -67,6 +67,8 @@
     <string name="bells_selected_day">%1$s · %2$s</string>
     <string name="bells_quick_again">Быстрая настройка на неделю</string>
     <string name="bells_quick_this_day">Настроить этот день заново</string>
+    <string name="bells_apply_to_week">Применить ко всей неделе</string>
+    <string name="bells_reset_to_week">Сбросить к звонкам недели</string>
     <string name="now_sunday">Сегодня выходной — уроков нет.</string>
     <string name="now_no_lessons">На сегодня уроки ещё не вписаны.</string>
     <string name="now_until_start">до начала</string>

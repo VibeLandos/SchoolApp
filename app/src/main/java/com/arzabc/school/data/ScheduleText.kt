@@ -80,7 +80,7 @@ object ScheduleText {
     private fun decodeDay(lines: List<String>): DaySchedulePayload? {
         val dow = lines.intAfter("dow:")?.coerceIn(1, 6) ?: return null
         val sections = sections(lines)
-        val bells = parseBells(sections["bells"] ?: return null) ?: return null
+        val bells = sections["bells"]?.let { parseBells(it) } ?: BellSchedule.defaults()
         val lessons = parseLessons(sections["lessons"].orEmpty(), dow)
         return DaySchedulePayload(dow, bells, lessons)
     }
@@ -88,7 +88,7 @@ object ScheduleText {
     private fun decodeWeek(lines: List<String>): WeekSchedulePayload? {
         val days = lines.intAfter("days:")?.coerceIn(5, 6) ?: 6
         val sections = sections(lines)
-        val week = parseBells(sections["bells"] ?: return null) ?: return null
+        val week = sections["bells"]?.let { parseBells(it) } ?: BellSchedule.defaults()
         val overrides = (1..6).mapNotNull { day ->
             val body = sections["bells $day"] ?: return@mapNotNull null
             val schedule = parseBells(body) ?: return@mapNotNull null

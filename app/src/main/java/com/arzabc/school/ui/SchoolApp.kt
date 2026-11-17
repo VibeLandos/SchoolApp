@@ -407,7 +407,10 @@ fun SchoolApp(
                     date = current.date,
                     period = current.period,
                     existing = current.existing,
-                    usedPeriods = ui.lessons.filter { it.dayOfWeek == day }.map { it.period }.toSet(),
+                    usedPeriods = ui.lessons
+                        .filter { it.dayOfWeek == day && it.id != current.existing?.id }
+                        .map { it.period }
+                        .toSet(),
                     bells = ui.weekBells.forDay(day),
                     onDismiss = { editor = null },
                     onSave = viewModel::saveLesson,
