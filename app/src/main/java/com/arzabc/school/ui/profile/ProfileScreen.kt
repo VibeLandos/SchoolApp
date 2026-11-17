@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -112,15 +113,15 @@ fun ProfileScreen(
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(BlobShape)
-                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "А",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_subject_diary),
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                     Spacer(Modifier.width(16.dp))
@@ -133,7 +134,7 @@ fun ProfileScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Версия 2.0",
+                            text = "Версия 2.1",
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         )
