@@ -292,7 +292,7 @@ fun TasksScreen(
             onClick = onAddHomework,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 96.dp),
+                .padding(end = 16.dp, bottom = 16.dp),
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             shape = RoundedCornerShape(16.dp),
