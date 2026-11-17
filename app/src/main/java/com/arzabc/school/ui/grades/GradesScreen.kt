@@ -45,8 +45,11 @@ import androidx.compose.ui.window.Dialog
 import com.arzabc.school.R
 import com.arzabc.school.data.Grade
 import com.arzabc.school.data.Lesson
+import com.arzabc.school.data.SubjectIcon
 import com.arzabc.school.ui.components.BlobShape
 import com.arzabc.school.ui.components.Md3TopHeader
+import com.arzabc.school.ui.components.SubjectIconBadge
+import com.arzabc.school.ui.components.SubjectIconPickerSheet
 import java.time.LocalDate
 import java.util.Locale
 
@@ -57,9 +60,12 @@ fun GradesScreen(
     onSaveGrade: (Grade) -> Unit,
     onDeleteGrade: (Grade) -> Unit,
     onOpenProfile: () -> Unit,
+    subjectIcons: Map<String, String> = emptyMap(),
+    onSetSubjectIcon: (subject: String, iconKey: String) -> Unit = { _, _ -> },
 ) {
     var subjectDetail by remember { mutableStateOf<String?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var iconPickerSubject by remember { mutableStateOf<String?>(null) }
 
     val subjectsWithGrades = remember(grades, lessons) {
         val fromLessons = lessons.map { it.subject }.filter { it.isNotBlank() }.distinct()
@@ -174,8 +180,14 @@ fun GradesScreen(
                             .clickable { subjectDetail = subject }
                             .padding(horizontal = 18.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
+                        SubjectIconBadge(
+                            icon = SubjectIcon.resolve(subject, subjectIcons),
+                            size = 52.dp,
+                            iconSize = 28.dp,
+                            onClick = { iconPickerSubject = subject },
+                        )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = subject,
@@ -257,6 +269,18 @@ fun GradesScreen(
                     ),
                 )
                 showAddDialog = false
+            },
+        )
+    }
+
+    iconPickerSubject?.let { subj ->
+        SubjectIconPickerSheet(
+            subject = subj,
+            currentIcon = SubjectIcon.resolve(subj, subjectIcons),
+            onDismiss = { iconPickerSubject = null },
+            onConfirm = { icon ->
+                onSetSubjectIcon(subj, icon.key)
+                iconPickerSubject = null
             },
         )
     }

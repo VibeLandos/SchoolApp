@@ -37,6 +37,7 @@ data class DiaryUiState(
     val weekBells: WeekBells = WeekBells(),
     val schoolDays: Int = 6,
     val schoolYear: SchoolYear = SchoolYear.academicFor(),
+    val subjectIcons: Map<String, String> = emptyMap(),
 )
 
 class SchoolViewModel(application: Application) : AndroidViewModel(application) {
@@ -64,8 +65,15 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         settings.weekBells,
         settings.schoolDays,
         settings.schoolYear,
-    ) { bells, days, year ->
-        Triple(bells, days, year)
+        settings.subjectIcons,
+    ) { bells, days, year, icons ->
+        data class SettingsSlice(
+            val bells: WeekBells,
+            val days: Int,
+            val year: SchoolYear,
+            val icons: Map<String, String>,
+        )
+        SettingsSlice(bells, days, year, icons)
     }
 
     val uiState: StateFlow<DiaryUiState> = combine(
@@ -74,7 +82,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
         settingsFlow,
     ) { dates, repo, settingsSlice ->
         val (selected, task) = dates
-        val (weekBells, schoolDays, schoolYear) = settingsSlice
+        val (weekBells, schoolDays, schoolYear, subjectIcons) = settingsSlice
         val clamped = Dates.clampToSchoolWeek(selected, schoolDays)
         val clampedTask = Dates.clampToSchoolWeek(task, schoolDays)
         DiaryUiState(
@@ -89,6 +97,7 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
             weekBells = weekBells,
             schoolDays = schoolDays,
             schoolYear = schoolYear,
+            subjectIcons = subjectIcons,
         )
     }.stateIn(
         viewModelScope,
@@ -115,6 +124,10 @@ class SchoolViewModel(application: Application) : AndroidViewModel(application) 
     fun shiftTaskDay(days: Int) {
         val schoolDays = settings.schoolDays.value
         taskDate.value = Dates.shiftSchoolDay(taskDate.value, days, schoolDays)
+    }
+
+    fun setSubjectIcon(subject: String, iconKey: String) {
+        settings.setSubjectIcon(subject, iconKey)
     }
 
     fun saveLesson(lesson: Lesson) {

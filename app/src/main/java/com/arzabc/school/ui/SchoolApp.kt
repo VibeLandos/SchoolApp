@@ -336,6 +336,8 @@ fun SchoolApp(
                                 )
                             },
                             onOpenProfile = { go(Routes.Profile) },
+                            subjectIcons = ui.subjectIcons,
+                            onSetSubjectIcon = viewModel::setSubjectIcon,
                         )
                     }
                     composable(Routes.Tasks) {
@@ -346,6 +348,8 @@ fun SchoolApp(
                             onOpenHomework = ::openHomework,
                             onAddHomework = { editor = Editor.HomeworkAddChoice(ui.taskDate) },
                             onOpenProfile = { go(Routes.Profile) },
+                            subjectIcons = ui.subjectIcons,
+                            onSetSubjectIcon = viewModel::setSubjectIcon,
                         )
                     }
                     composable(Routes.Grades) {
@@ -355,6 +359,8 @@ fun SchoolApp(
                             onSaveGrade = viewModel::saveGrade,
                             onDeleteGrade = viewModel::deleteGrade,
                             onOpenProfile = { go(Routes.Profile) },
+                            subjectIcons = ui.subjectIcons,
+                            onSetSubjectIcon = viewModel::setSubjectIcon,
                         )
                     }
                     composable(Routes.Profile) {
@@ -432,6 +438,8 @@ fun SchoolApp(
                     onDismiss = { editor = null },
                     onSave = viewModel::saveLesson,
                     onDelete = viewModel::deleteLesson,
+                    subjectIcons = ui.subjectIcons,
+                    onSetSubjectIcon = viewModel::setSubjectIcon,
                 )
             }
             is Editor.HomeworkSlot -> EditHomeworkSheet(

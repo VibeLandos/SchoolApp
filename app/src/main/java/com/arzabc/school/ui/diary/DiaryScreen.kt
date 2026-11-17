@@ -68,6 +68,9 @@ import com.arzabc.school.ui.components.BlobShape
 import com.arzabc.school.ui.components.HeroBannerCard
 import com.arzabc.school.ui.components.Md3LessonCard
 import com.arzabc.school.ui.components.Md3TopHeader
+import com.arzabc.school.ui.components.SubjectIconPickerSheet
+import com.arzabc.school.data.SubjectIcon
+import androidx.compose.ui.res.painterResource
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -95,6 +98,8 @@ fun DiaryScreen(
     onDeleteGrade: (Grade) -> Unit,
     onAddLesson: (date: LocalDate) -> Unit,
     onOpenProfile: () -> Unit,
+    subjectIcons: Map<String, String> = emptyMap(),
+    onSetSubjectIcon: (subject: String, iconKey: String) -> Unit = { _, _ -> },
 ) {
     val lessonsByDay = remember(lessons) { lessons.groupBy { it.dayOfWeek } }
     var clock by remember { mutableStateOf(LocalTime.now() to LocalDate.now()) }
@@ -146,6 +151,7 @@ fun DiaryScreen(
 
     var activeLessonForMenu by remember { mutableStateOf<Pair<Lesson, LocalDate>?>(null) }
     var activeGradePickerLesson by remember { mutableStateOf<Triple<Lesson, LocalDate, Grade?>?>(null) }
+    var activeIconPickerSubject by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -190,6 +196,8 @@ fun DiaryScreen(
                     grades = grades,
                     bells = weekBells.forDay(Dates.schoolDayOfWeek(date)),
                     todayStatus = if (date == today) todayStatus else null,
+                    subjectIcons = subjectIcons,
+                    onPickIcon = { s -> activeIconPickerSubject = s },
                     onLessonClick = { lesson -> activeLessonForMenu = lesson to date },
                     onAddLesson = { onAddLesson(date) },
                 )
@@ -224,7 +232,12 @@ fun DiaryScreen(
             date = date,
             existingGrade = existingGrade,
             existingHomework = existingHw,
+            subjectIcons = subjectIcons,
             onDismiss = { activeLessonForMenu = null },
+            onPickIcon = {
+                activeLessonForMenu = null
+                activeIconPickerSubject = lesson.subject
+            },
             onOpenHomework = {
                 activeLessonForMenu = null
                 if (existingHw != null) {
@@ -271,6 +284,19 @@ fun DiaryScreen(
                 if (existingGrade != null) {
                     onDeleteGrade(existingGrade)
                 }
+            },
+        )
+    }
+
+    // Subject icon picker bottom sheet
+    activeIconPickerSubject?.let { subject ->
+        SubjectIconPickerSheet(
+            subject = subject,
+            currentIcon = SubjectIcon.resolve(subject, subjectIcons),
+            onDismiss = { activeIconPickerSubject = null },
+            onConfirm = { newIcon ->
+                onSetSubjectIcon(subject, newIcon.key)
+                activeIconPickerSubject = null
             },
         )
     }
@@ -350,6 +376,8 @@ private fun DiaryDayPage(
     grades: List<Grade>,
     bells: BellSchedule,
     todayStatus: NowStatus?,
+    subjectIcons: Map<String, String>,
+    onPickIcon: (String) -> Unit,
     onLessonClick: (Lesson) -> Unit,
     onAddLesson: () -> Unit,
 ) {
@@ -457,12 +485,17 @@ private fun DiaryDayPage(
                 val gradeForLesson = grades.firstOrNull {
                     it.subject.equals(lesson.subject, ignoreCase = true) && it.epochDay == date.toEpochDay()
                 }
+                val subjectIcon = remember(lesson.subject, subjectIcons) {
+                    SubjectIcon.resolve(lesson.subject, subjectIcons)
+                }
 
                 Md3LessonCard(
                     time = time,
                     subject = lesson.subject,
                     homeworkOrRoom = homeworkOrRoom,
                     grade = gradeForLesson?.value,
+                    icon = subjectIcon,
+                    onIconClick = { onPickIcon(lesson.subject) },
                     onClick = { onLessonClick(lesson) },
                 )
             }
@@ -476,7 +509,9 @@ private fun LessonActionDialog(
     date: LocalDate,
     existingGrade: Grade?,
     existingHomework: Homework?,
+    subjectIcons: Map<String, String>,
     onDismiss: () -> Unit,
+    onPickIcon: () -> Unit,
     onOpenHomework: () -> Unit,
     onPickGrade: () -> Unit,
     onEditLesson: () -> Unit,
@@ -538,7 +573,30 @@ private fun LessonActionDialog(
 
             Spacer(Modifier.height(10.dp))
 
-            // 3. Edit lesson button
+            // 3. Subject icon button
+            val currentIcon = remember(lesson.subject, subjectIcons) {
+                SubjectIcon.resolve(lesson.subject, subjectIcons)
+            }
+            FilledTonalButton(
+                onClick = onPickIcon,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = currentIcon.iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Значок предмета",
+                    fontSize = 16.sp,
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // 4. Edit lesson button
             OutlinedButton(
                 onClick = onEditLesson,
                 modifier = Modifier.fillMaxWidth(),

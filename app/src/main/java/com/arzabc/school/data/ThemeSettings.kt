@@ -39,6 +39,8 @@ class ThemeSettings(context: Context) {
     val schoolDays: StateFlow<Int> = _schoolDays.asStateFlow()
     private val _schoolYear = MutableStateFlow(loadSchoolYear())
     val schoolYear: StateFlow<SchoolYear> = _schoolYear.asStateFlow()
+    private val _subjectIcons = MutableStateFlow(loadSubjectIcons())
+    val subjectIcons: StateFlow<Map<String, String>> = _subjectIcons.asStateFlow()
 
     fun setStyle(style: UiStyle) {
         write(_appearance.value.copy(style = style))
@@ -79,6 +81,15 @@ class ThemeSettings(context: Context) {
             .putLong(KEY_YEAR_END, year.end.toEpochDay())
             .apply()
         _schoolYear.value = year
+    }
+
+    fun setSubjectIcon(subject: String, iconKey: String) {
+        val norm = subject.trim()
+        if (norm.isEmpty()) return
+        val updated = _subjectIcons.value.toMutableMap()
+        updated[norm] = iconKey
+        prefs.edit().putString(KEY_SUBJECT_ICON_PREFIX + norm, iconKey).apply()
+        _subjectIcons.value = updated
     }
 
     private fun write(next: Appearance) {
@@ -130,6 +141,17 @@ class ThemeSettings(context: Context) {
         )
     }
 
+    private fun loadSubjectIcons(): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        for ((key, value) in prefs.all) {
+            if (key.startsWith(KEY_SUBJECT_ICON_PREFIX) && value is String) {
+                val subject = key.removePrefix(KEY_SUBJECT_ICON_PREFIX)
+                result[subject] = value
+            }
+        }
+        return result
+    }
+
     companion object {
         private const val PREFS = "diary_settings"
         private const val KEY_MODE = "theme_mode"
@@ -143,6 +165,7 @@ class ThemeSettings(context: Context) {
         private const val KEY_SCHOOL_DAYS = "school_days"
         private const val KEY_YEAR_START = "school_year_start"
         private const val KEY_YEAR_END = "school_year_end"
+        private const val KEY_SUBJECT_ICON_PREFIX = "sub_icon_"
 
         private fun android.content.SharedPreferences.Editor.save(sync: Boolean) {
             if (sync) commit() else apply()

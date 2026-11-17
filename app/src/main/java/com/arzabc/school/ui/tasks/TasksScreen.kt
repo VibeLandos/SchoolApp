@@ -45,7 +45,10 @@ import androidx.compose.ui.unit.sp
 import com.arzabc.school.data.Dates
 import com.arzabc.school.data.Homework
 import com.arzabc.school.data.Lesson
+import com.arzabc.school.data.SubjectIcon
 import com.arzabc.school.ui.components.Md3TopHeader
+import com.arzabc.school.ui.components.SubjectIconBadge
+import com.arzabc.school.ui.components.SubjectIconPickerSheet
 import java.time.LocalDate
 
 enum class TasksFilter {
@@ -62,8 +65,11 @@ fun TasksScreen(
     onOpenHomework: (Homework) -> Unit,
     onAddHomework: () -> Unit,
     onOpenProfile: () -> Unit,
+    subjectIcons: Map<String, String> = emptyMap(),
+    onSetSubjectIcon: (subject: String, iconKey: String) -> Unit = { _, _ -> },
 ) {
     var filter by remember { mutableStateOf(TasksFilter.All) }
+    var iconPickerSubject by remember { mutableStateOf<String?>(null) }
     val today = remember { LocalDate.now() }
     val todayEpoch = today.toEpochDay()
 
@@ -242,7 +248,17 @@ fun TasksScreen(
                                 }
                             }
 
-                            Spacer(Modifier.width(16.dp))
+                            Spacer(Modifier.width(14.dp))
+
+                            SubjectIconBadge(
+                                icon = SubjectIcon.resolve(subjectName, subjectIcons),
+                                size = 44.dp,
+                                iconSize = 24.dp,
+                                shape = RoundedCornerShape(14.dp),
+                                onClick = { iconPickerSubject = subjectName },
+                            )
+
+                            Spacer(Modifier.width(14.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
@@ -282,6 +298,18 @@ fun TasksScreen(
             shape = RoundedCornerShape(16.dp),
             icon = { Icon(Icons.Filled.Add, contentDescription = null) },
             text = { Text("Добавить", fontSize = 16.sp, fontWeight = FontWeight.Medium) },
+        )
+    }
+
+    iconPickerSubject?.let { subj ->
+        SubjectIconPickerSheet(
+            subject = subj,
+            currentIcon = SubjectIcon.resolve(subj, subjectIcons),
+            onDismiss = { iconPickerSubject = null },
+            onConfirm = { icon ->
+                onSetSubjectIcon(subj, icon.key)
+                iconPickerSubject = null
+            },
         )
     }
 }

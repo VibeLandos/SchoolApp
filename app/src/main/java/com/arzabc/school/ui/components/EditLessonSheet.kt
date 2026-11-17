@@ -16,6 +16,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -28,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -38,6 +41,7 @@ import com.arzabc.school.data.BellSchedule
 import com.arzabc.school.data.Dates
 import com.arzabc.school.data.Lesson
 import com.arzabc.school.data.SchoolCatalog
+import com.arzabc.school.data.SubjectIcon
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -51,10 +55,13 @@ fun EditLessonSheet(
     onDismiss: () -> Unit,
     onSave: (Lesson) -> Unit,
     onDelete: (Lesson) -> Unit,
+    subjectIcons: Map<String, String> = emptyMap(),
+    onSetSubjectIcon: ((subject: String, iconKey: String) -> Unit)? = null,
 ) {
     var subject by remember(existing) { mutableStateOf(existing?.subject.orEmpty()) }
     var room by remember(existing) { mutableStateOf(existing?.room.orEmpty()) }
     var chosenPeriod by remember(existing, period) { mutableStateOf(period) }
+    var showIconPicker by remember { mutableStateOf(false) }
     val slot = bells.of(chosenPeriod)
     val otherUsedPeriods = remember(usedPeriods, existing) {
         if (existing != null) usedPeriods - existing.period else usedPeriods
@@ -126,6 +133,18 @@ fun EditLessonSheet(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                leadingIcon = {
+                    val icon = remember(subject, subjectIcons) {
+                        SubjectIcon.resolve(subject, subjectIcons)
+                    }
+                    IconButton(onClick = { if (subject.isNotBlank()) showIconPicker = true }) {
+                        Icon(
+                            painter = painterResource(id = icon.iconRes),
+                            contentDescription = "Значок предмета",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
             )
             Spacer(Modifier.height(8.dp))
             val subjects = stringArrayResource(R.array.subjects)
@@ -196,5 +215,17 @@ fun EditLessonSheet(
                 }
             }
         }
+    }
+
+    if (showIconPicker && subject.isNotBlank()) {
+        SubjectIconPickerSheet(
+            subject = subject,
+            currentIcon = SubjectIcon.resolve(subject, subjectIcons),
+            onDismiss = { showIconPicker = false },
+            onConfirm = { chosenIcon ->
+                onSetSubjectIcon?.invoke(subject, chosenIcon.key)
+                showIconPicker = false
+            },
+        )
     }
 }

@@ -1,5 +1,6 @@
 package com.arzabc.school.ui.components
 
+import com.arzabc.school.data.SubjectIcon
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -536,6 +537,8 @@ fun Md3LessonCard(
     grade: Int?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icon: SubjectIcon = SubjectIcon.defaultFor(subject),
+    onIconClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -551,7 +554,13 @@ fun Md3LessonCard(
             text = time,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(56.dp),
+            modifier = Modifier.width(52.dp),
+        )
+        SubjectIconBadge(
+            icon = icon,
+            size = 52.dp,
+            iconSize = 28.dp,
+            onClick = onIconClick,
         )
         Column(
             modifier = Modifier
