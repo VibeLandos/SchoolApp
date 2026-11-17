@@ -1,6 +1,7 @@
 ﻿package com.arzabc.school.ui.components
 
 import android.net.Uri
+import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -10,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -32,25 +34,32 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.window.Dialog
 import com.arzabc.school.R
 import com.arzabc.school.data.Dates
@@ -94,9 +103,40 @@ fun EditHomeworkSheet(
     var preview by remember { mutableStateOf<PhotoDraft?>(null) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val isImeVisible = WindowInsets.isImeVisible
 
-    BackHandler(enabled = isImeVisible) {
+    val view = LocalView.current
+    var isKeyboardOpen by remember { mutableStateOf(false) }
+
+    DisposableEffect(view) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
+            val insets = ViewCompat.getRootWindowInsets(view)
+            val imeByInsets = insets?.isVisible(WindowInsetsCompat.Type.ime()) == true
+
+            val rect = android.graphics.Rect()
+            view.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = view.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+            val imeByFrame = keypadHeight > screenHeight * 0.15
+
+            isKeyboardOpen = imeByInsets || imeByFrame
+        }
+        view.viewTreeObserver.addOnGlobalLayoutListener(listener)
+        onDispose {
+            view.viewTreeObserver.removeOnGlobalLayoutListener(listener)
+        }
+    }
+
+    var isDescFocused by remember { mutableStateOf(false) }
+    val isImeActive = isKeyboardOpen || isDescFocused
+
+    LaunchedEffect(isKeyboardOpen) {
+        if (!isKeyboardOpen) {
+            focusManager.clearFocus()
+            isDescFocused = false
+        }
+    }
+
+    BackHandler(enabled = isImeActive) {
         focusManager.clearFocus()
         keyboardController?.hide()
     }
@@ -129,17 +169,20 @@ fun EditHomeworkSheet(
 
     ModalBottomSheet(
         onDismissRequest = {
-            if (isImeVisible) {
+            if (isImeActive) {
                 focusManager.clearFocus()
                 keyboardController?.hide()
             } else {
                 onDismiss()
             }
         },
+        properties = ModalBottomSheetDefaults.properties(
+            shouldDismissOnBackPress = !isImeActive,
+        ),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
-        Column(
-            Modifier
+        Box(
+            modifier = Modifier
                 .fillMaxWidth()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -147,13 +190,17 @@ fun EditHomeworkSheet(
                 ) {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                }
-                .navigationBarsPadding()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 28.dp),
+                },
         ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 28.dp),
+            ) {
             Text(stringResource(R.string.homework_sheet_title), fontSize = 22.sp)
             val lessonLine = when {
                 lesson != null -> stringResource(R.string.homework_sheet_subtitle, period, lesson.subject)
@@ -187,7 +234,8 @@ fun EditHomeworkSheet(
                 placeholder = { Text(stringResource(R.string.hint_assignment)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(96.dp),
+                    .height(96.dp)
+                    .onFocusChanged { isDescFocused = it.isFocused },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             )
             Spacer(Modifier.height(12.dp))
@@ -254,6 +302,7 @@ fun EditHomeworkSheet(
             }
         }
     }
+}
 
     val shown = preview
     if (shown != null) {

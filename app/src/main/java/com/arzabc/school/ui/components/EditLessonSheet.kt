@@ -1,9 +1,11 @@
 ﻿package com.arzabc.school.ui.components
 
+import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -26,24 +28,31 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.arzabc.school.R
 import com.arzabc.school.data.BellSchedule
 import com.arzabc.school.data.Dates
@@ -72,9 +81,42 @@ fun EditLessonSheet(
     var showIconPicker by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val isImeVisible = WindowInsets.isImeVisible
 
-    BackHandler(enabled = isImeVisible) {
+    val view = LocalView.current
+    var isKeyboardOpen by remember { mutableStateOf(false) }
+
+    DisposableEffect(view) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
+            val insets = ViewCompat.getRootWindowInsets(view)
+            val imeByInsets = insets?.isVisible(WindowInsetsCompat.Type.ime()) == true
+
+            val rect = android.graphics.Rect()
+            view.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = view.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+            val imeByFrame = keypadHeight > screenHeight * 0.15
+
+            isKeyboardOpen = imeByInsets || imeByFrame
+        }
+        view.viewTreeObserver.addOnGlobalLayoutListener(listener)
+        onDispose {
+            view.viewTreeObserver.removeOnGlobalLayoutListener(listener)
+        }
+    }
+
+    var isSubjectFocused by remember { mutableStateOf(false) }
+    var isRoomFocused by remember { mutableStateOf(false) }
+    val isImeActive = isKeyboardOpen || isSubjectFocused || isRoomFocused
+
+    LaunchedEffect(isKeyboardOpen) {
+        if (!isKeyboardOpen) {
+            focusManager.clearFocus()
+            isSubjectFocused = false
+            isRoomFocused = false
+        }
+    }
+
+    BackHandler(enabled = isImeActive) {
         focusManager.clearFocus()
         keyboardController?.hide()
     }
@@ -90,17 +132,20 @@ fun EditLessonSheet(
 
     ModalBottomSheet(
         onDismissRequest = {
-            if (isImeVisible) {
+            if (isImeActive) {
                 focusManager.clearFocus()
                 keyboardController?.hide()
             } else {
                 onDismiss()
             }
         },
+        properties = ModalBottomSheetDefaults.properties(
+            shouldDismissOnBackPress = !isImeActive,
+        ),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
-        Column(
-            Modifier
+        Box(
+            modifier = Modifier
                 .fillMaxWidth()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -108,13 +153,17 @@ fun EditLessonSheet(
                 ) {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                }
-                .navigationBarsPadding()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 28.dp),
+                },
         ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 28.dp),
+            ) {
             Text(
                 text = if (existing == null) {
                     stringResource(R.string.lesson_title, chosenPeriod)
@@ -162,7 +211,9 @@ fun EditLessonSheet(
                 value = subject,
                 onValueChange = { subject = it },
                 label = { Text(stringResource(R.string.label_subject)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { isSubjectFocused = it.isFocused },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 leadingIcon = {
@@ -208,7 +259,9 @@ fun EditLessonSheet(
                 value = room,
                 onValueChange = { room = it },
                 label = { Text(stringResource(R.string.label_room)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { isRoomFocused = it.isFocused },
                 singleLine = true,
             )
             Spacer(Modifier.height(16.dp))
@@ -258,6 +311,7 @@ fun EditLessonSheet(
             }
         }
     }
+}
 
     if (showIconPicker && subject.isNotBlank()) {
         SubjectIconPickerSheet(

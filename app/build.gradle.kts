@@ -14,8 +14,8 @@ android {
         applicationId = "com.arzabc.school"
         minSdk = 24
         targetSdk = 34
-        versionCode = 12
-        versionName = "2.4"
+        versionCode = 13
+        versionName = "2.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
